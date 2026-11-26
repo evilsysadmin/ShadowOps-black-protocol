@@ -165,3 +165,30 @@ func select_operation(operation: String) -> bool:
 		return false
 	selected_operation = operation
 	return true
+
+# Earned credits are derived from canonical completions, never from replay counts.
+func operation_reward(operation: String) -> int:
+	var completed := false
+	match operation:
+		Operations.HOTEL:
+			completed = not intel_choice.is_empty()
+		Operations.ARCHIVE:
+			completed = archive_completed
+	if not completed:
+		return 0
+	var report := field_report(operation)
+	var reward := 100
+	if not report.is_empty():
+		if not bool(report["alerted"]):
+			reward += 40
+		if int(report["damage"]) == 0:
+			reward += 20
+		if int(report["shots"]) == 0 and not bool(report["guard_down"]):
+			reward += 20
+	return reward
+
+func earned_credits() -> int:
+	return operation_reward(Operations.HOTEL) + operation_reward(Operations.ARCHIVE)
+
+func available_credits() -> int:
+	return earned_credits()

@@ -30,6 +30,7 @@ func run_regression() -> void:
 	check(operations.report_summary(false, {}) == "Not completed.", "pending operation report")
 	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
+	check(Campaign.available_credits() == 0, "fresh campaign has no credits")
 	check(not Campaign.negotiate_handler("coordinate"), "negotiation locked before first operation")
 	check(not Campaign.select_operation("silent_archive"), "archive locked initially")
 	check(not Campaign.record_archive(), "archive cannot complete before hotel")
@@ -49,6 +50,7 @@ func run_regression() -> void:
 	check(not Campaign.record_intel("retain", {"seconds": -1}), "reject invalid field report")
 	check(Campaign.record_intel("retain", hotel_report), "record first mission")
 	check(Campaign.field_report("unexpected_guest") == hotel_report, "hotel performance stored")
+	check(Campaign.available_credits() == 180, "clean operation reward")
 	check(handler.assessment(hotel_report).contains("No shots, no damage"), "grounded clean assessment")
 	check(operations.report_summary(true, hotel_report).contains("— accuracy"), "zero shots has no accuracy")
 	hotel_report["seconds"] = 999
@@ -60,6 +62,7 @@ func run_regression() -> void:
 	check(handler.assessment(archive_report).contains("full alert and you took damage"), "grounded alert assessment")
 	check(Campaign.record_archive({"seconds": 1}), "completed archive replay is ignored")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive replay preserves report")
+	check(Campaign.available_credits() == 280, "canonical rewards cannot be farmed")
 	check(Campaign.handler_trust() == -1 and Campaign.independent_leverage() == 1, "retain consequences")
 	check(Campaign.can_negotiate_handler(), "negotiation unlocked")
 	check(not Campaign.negotiate_handler("invalid"), "invalid agreement rejected")
@@ -86,6 +89,7 @@ func run_regression() -> void:
 	Campaign.handler_agreement = ""
 	Campaign.load_campaign()
 	check(Campaign.handler_agreement == "coordinate", "agreement survives reload")
+	check(Campaign.available_credits() == 280, "earned credits survive reload")
 	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")
 	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")

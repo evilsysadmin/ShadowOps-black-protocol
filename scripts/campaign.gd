@@ -270,3 +270,27 @@ func buy_equipment(item: String) -> bool:
 	var next_owned: Array[String] = equipment_owned.duplicate()
 	next_owned.append(item)
 	return write_campaign(intel_choice, specialization, archive_completed, field_reports, handler_agreement, -1, next_owned)
+
+# Rook's standing derives from recorded dealings, not general leverage.
+func rook_reputation() -> int:
+	return (1 if owns_equipment("quiet_kit") else 0) + (1 if archive_intel_cost == INTEL_ROOK_COST else 0)
+
+func rook_relationship() -> String:
+	if not independent_supplier_available():
+		return "No access"
+	if rook_reputation() >= 2:
+		return "Established client"
+	if rook_reputation() == 1:
+		return "Known client"
+	return "New contact"
+
+func rook_message() -> String:
+	if not independent_supplier_available():
+		return "Bring something to the table before we talk business."
+	if rook_reputation() >= 2:
+		return "Two deals, both paid. That's the sort of reliability I appreciate."
+	if owns_equipment("quiet_kit"):
+		return "You bought my movement kit. I hope it earns its keep."
+	if archive_intel_cost == INTEL_ROOK_COST:
+		return "You bought my reconnaissance. The information is yours."
+	return "I trade in access, not loyalty. My reconnaissance offers are in the briefing."

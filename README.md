@@ -83,6 +83,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Rook, an independent supplier, offers a permanent movement kit for 65 credits through the armory. Access requires at least one independent leverage point (retaining the hotel file or choosing autonomy). The kit adds 0.25 to field crouch speed, stacking with specialization. It does not change guard visibility rules. Ownership and expenses use the existing inventory save and balance.
 
+- Rook has independent standing derived from actual purchases from him (+1 each for his movement kit and his reconnaissance). General leverage unlocks access but does not count as reputation. The armory and dossier show the relationship; messages react to recorded dealings. Existing saves derive the same standing without a schema change.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

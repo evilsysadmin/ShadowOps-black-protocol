@@ -14,7 +14,7 @@ godot --path .
 godot -e --path .
 ```
 
-Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, C toggle low cover, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, R reload (or return to the safehouse after mission ends), mouse look, Esc releases the pointer, left click recaptures it.
+Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, C toggle low cover, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, R reload (or return to the safehouse after mission ends), mouse look, Esc pauses or resumes during exploration and operations.
 
 ## Local startup gate
 
@@ -66,6 +66,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 - Original synthesized audio cues accompany fired shots, confirmed hits, reload start, damage, objectives and failure. Cues are built once per field deployment, with bounded players and no external audio assets. Check audible feedback and volume during a real playtest; the safehouse remains silent for now.
 
 - Effects volume can be set from the briefing and saved explicitly (0% mutes new cues). Preferences use `user://settings.cfg`, separate from campaign progress. Failed writes are reported and leave the previous setting active.
+
+- Esc opens a real pause overlay in the safehouse and field missions, suspending physics, guards, combat and mission timers. Resume restores mouse capture. Audio settings are accessible while paused. Terminal debrief/failure states are excluded. Local regressions check pause ownership, resume, terminal exclusion and independent settings persistence.
 
 ## Development policy
 

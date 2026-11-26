@@ -114,6 +114,22 @@ func run_regression() -> void:
 	if is_instance_valid(home_agent):
 		check(int(home_agent.get("maximum_health")) == 120, "kit not applied in safehouse")
 		check(home_agent.get("combat") == null, "safehouse combat disabled")
+		var menu: CanvasLayer = home_agent.get("pause_menu")
+		check(is_instance_valid(menu), "pause menu exists")
+		if is_instance_valid(menu):
+			menu.call("pause_game")
+			check(get_tree().paused and bool(menu.get("owns_pause")), "pause suspends scene tree")
+			menu.call("resume")
+			check(not get_tree().paused and not bool(menu.get("owns_pause")), "resume restores scene tree")
+			home_agent.set("controls_enabled", false)
+			menu.call("pause_game")
+			check(not get_tree().paused, "terminal state cannot pause")
+			home_agent.set("controls_enabled", true)
+		check(GameSettings.save_effects_volume(0.25), "save effects volume")
+		var settings := ConfigFile.new()
+		check(settings.load("user://settings.cfg") == OK, "load independent settings")
+		check(is_equal_approx(float(settings.get_value("audio", "effects_volume", -1)), 0.25), "volume persisted")
+		check(GameSettings.save_effects_volume(1.5) and is_equal_approx(GameSettings.effects_volume, 1.0), "volume clamped")
 	safehouse.queue_free()
 	await get_tree().process_frame
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

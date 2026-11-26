@@ -63,6 +63,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 The first operation is now described through a shared catalog. Silent Archive unlocks after the canonical hotel debrief. Select it at the briefing terminal; recover the ledger and return to extraction. Sharing the hotel file opens a closer starting position; retaining it starts at the far entrance. Archive completion persists independently of the first decision and specialization. Both operations remain replayable. The archive environment is procedural and provisional. It has its own patrol route and access/records signage. Isolated regressions instantiate both narrative branches and check spawn, extraction and ledger reachability.
 
+- Original synthesized audio cues accompany fired shots, confirmed hits, reload start, damage, objectives and failure. Cues are built once per field deployment, with bounded players and no external audio assets. Check audible feedback and volume during a real playtest; the safehouse remains silent for now.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

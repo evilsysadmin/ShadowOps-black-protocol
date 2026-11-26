@@ -104,10 +104,12 @@ func _physics_process(delta: float) -> void:
 			reserve -= transferred
 	elif reload_requested and rounds < MAGAZINE_SIZE and reserve > 0:
 		reload_remaining = RELOAD_DURATION
+		agent.call("play_cue", "reload")
 	elif pending and aiming and cooldown <= 0.0:
 		if rounds > 0:
 			rounds -= 1
 			shots_fired += 1
+			agent.call("play_cue", "fire")
 			fire()
 			cooldown = 0.28
 		else:
@@ -143,6 +145,7 @@ func fire() -> void:
 		if is_instance_valid(target) and target.has_method("receive_hit"):
 			target.call("receive_hit", 1)
 			target_hits += 1
+			agent.call("play_cue", "hit")
 			feedback.text = "TARGET HIT"
 			hit_flash = 0.18
 	feedback_time = 0.65

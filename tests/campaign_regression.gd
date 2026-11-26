@@ -19,6 +19,8 @@ func check(condition: bool, message: String) -> void:
 
 func run_regression() -> void:
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
+	check(not Campaign.select_operation("silent_archive"), "archive locked initially")
+	check(not Campaign.record_archive(), "archive cannot complete before hotel")
 	check(not Campaign.has_skill_point(), "fresh campaign has no skill point")
 	check(not Campaign.choose_specialization("resilience"), "no premature specialization")
 	check(not Campaign.record_intel("invalid"), "invalid choice rejected")
@@ -32,6 +34,8 @@ func run_regression() -> void:
 	check(Campaign.kit_health_bonus() == 0 and Campaign.kit_reserve() == 40, "supplies kit values")
 	check(not FileAccess.file_exists("user://campaign.cfg"), "kit does not create campaign save")
 	check(Campaign.record_intel("retain"), "record first mission")
+	check(Campaign.select_operation("silent_archive"), "archive unlocked by hotel")
+	check(Campaign.record_archive(), "archive completion recorded")
 	check(Campaign.handler_trust() == -1 and Campaign.independent_leverage() == 1, "retain consequences")
 	check(Campaign.has_skill_point(), "mission awards one skill point")
 	check(Campaign.record_intel("share"), "replay accepted")
@@ -46,7 +50,9 @@ func run_regression() -> void:
 	check(not saved.has_section("deployment"), "kit excluded from persistence")
 	Campaign.intel_choice = ""
 	Campaign.specialization = ""
+	Campaign.archive_completed = false
 	Campaign.load_campaign()
+	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")
 	check(Campaign.select_deployment_kit("protection"), "select protection for field test")
 	var hotel: Node = preload("res://scenes/hotel.tscn").instantiate()

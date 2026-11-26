@@ -5,6 +5,7 @@ const TEMP_PATH := "user://campaign.tmp"
 const SCHEMA := 1
 const MISSION_ID := "unexpected_guest"
 var intel_choice := ""
+var archive_completed := false
 var specialization := ""
 const SPECIALIZATIONS := ["resilience", "infiltration", "mobility"]
 var save_blocked := false
@@ -27,6 +28,11 @@ func load_campaign() -> void:
 	if not saved_skill is String or (saved_skill != "" and not SPECIALIZATIONS.has(saved_skill)) or (saved == "" and saved_skill != ""):
 		save_blocked = true
 		return
+	var archive: Variant = config.get_value("missions", "silent_archive", false)
+	if not archive is bool or (archive and saved == ""):
+		save_blocked = true
+		return
+	archive_completed = archive
 	intel_choice = saved
 	specialization = saved_skill
 
@@ -35,7 +41,7 @@ func record_intel(choice: String) -> bool:
 		return false
 	if not intel_choice.is_empty():
 		return true
-	return write_campaign(choice, specialization)
+	return write_campaign(choice, specialization, archive_completed)
 
 func has_skill_point() -> bool:
 	return not save_blocked and not intel_choice.is_empty() and specialization.is_empty()
@@ -43,12 +49,13 @@ func has_skill_point() -> bool:
 func choose_specialization(value: String) -> bool:
 	if not has_skill_point() or not SPECIALIZATIONS.has(value):
 		return false
-	return write_campaign(intel_choice, value)
+	return write_campaign(intel_choice, value, archive_completed)
 
-func write_campaign(choice: String, skill: String) -> bool:
+func write_campaign(choice: String, skill: String, completed_archive: bool) -> bool:
 	var config := ConfigFile.new()
 	config.set_value("meta", "schema", SCHEMA)
 	config.set_value("missions", MISSION_ID, choice)
+	config.set_value("missions", "silent_archive", completed_archive)
 	config.set_value("progression", "specialization", skill)
 	if config.save(TEMP_PATH) != OK:
 		return false
@@ -56,7 +63,15 @@ func write_campaign(choice: String, skill: String) -> bool:
 		return false
 	intel_choice = choice
 	specialization = skill
+	archive_completed = completed_archive
 	return true
+
+func record_archive() -> bool:
+	if save_blocked or intel_choice.is_empty():
+		return false
+	if archive_completed:
+		return true
+	return write_campaign(intel_choice, specialization, true)
 
 func handler_trust() -> int:
 	match intel_choice:

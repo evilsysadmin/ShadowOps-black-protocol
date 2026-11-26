@@ -1,10 +1,16 @@
 extends Control
 
 const HOTEL_SCENE := "res://scenes/hotel.tscn"
+const ARCHIVE_SCENE := "res://scenes/archive.tscn"
 const Operations = preload("res://scripts/operation_catalog.gd")
 const SAFEHOUSE_SCENE := "res://scenes/safehouse.tscn"
 var transitioning := false
 var error_label: Label
+var operation_selection: OptionButton
+var operation_ids: Array[String] = []
+var operation_title: Label
+var operation_description: Label
+var operation_status: Label
 var kit_selection: OptionButton
 var kit_description: Label
 var agent_status: Label
@@ -22,14 +28,22 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var panel := VBoxContainer.new()
 	panel.custom_minimum_size = Vector2(560, 0)
-	panel.add_theme_constant_override("separation", 10)
+	panel.add_theme_constant_override("separation", 7)
 	center.add_child(panel)
 	add_line(panel, "SHADOWOPS / OPERATIONS DIVISION", 18, Color(0.50, 0.80, 0.75))
-	add_line(panel, Operations.title_for(Operations.HOTEL), 36, Color(0.94, 0.94, 0.90))
+	operation_ids = Campaign.available_operations()
+	operation_selection = OptionButton.new()
+	for operation in operation_ids:
+		operation_selection.add_item(Operations.title_for(operation))
+	panel.add_child(operation_selection)
+	operation_title = add_line(panel, "", 36, Color(0.94, 0.94, 0.90))
 	add_line(panel, "BRIEFING  /  CLASSIFIED", 16, Color(0.75, 0.64, 0.43))
-	add_line(panel, Operations.description_for(Operations.HOTEL, Campaign.intel_choice), 20, Color(0.85, 0.89, 0.89))
-	if not Campaign.intel_choice.is_empty():
-		add_line(panel, "REPLAY — Your original campaign decision will be preserved.", 17, Color(0.75, 0.64, 0.43))
+	operation_description = add_line(panel, "", 20, Color(0.85, 0.89, 0.89))
+	operation_status = add_line(panel, "", 17, Color(0.75, 0.64, 0.43))
+	operation_selection.item_selected.connect(update_operation)
+	var initial := operation_ids.size() - 1
+	operation_selection.select(initial)
+	update_operation(initial)
 	agent_status = add_line(panel, "", 18, Color(0.66, 0.83, 0.80))
 	refresh_agent_status()
 	if Campaign.has_skill_point():
@@ -59,10 +73,24 @@ func _ready() -> void:
 	deploy.text = "Deploy"
 	deploy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	deploy.custom_minimum_size.y = 44
-	deploy.pressed.connect(_go.bind(HOTEL_SCENE))
+	deploy.pressed.connect(_deploy)
 	actions.add_child(deploy)
 	error_label = add_line(panel, "", 16, Color(1.0, 0.4, 0.35))
 	deploy.grab_focus()
+
+func update_operation(index: int) -> void:
+	var operation := operation_ids[index]
+	operation_title.text = Operations.title_for(operation)
+	operation_description.text = Operations.description_for(operation, Campaign.intel_choice)
+	var completed := Campaign.archive_completed if operation == Operations.ARCHIVE else not Campaign.intel_choice.is_empty()
+	operation_status.text = "REPLAY — original campaign record preserved." if completed else "NEW OPERATION"
+
+func _deploy() -> void:
+	var operation := operation_ids[operation_selection.selected]
+	if not Campaign.select_operation(operation):
+		error_label.text = "Operation unavailable."
+		return
+	_go(ARCHIVE_SCENE if operation == Operations.ARCHIVE else HOTEL_SCENE)
 
 func refresh_agent_status() -> void:
 	var skill := Campaign.specialization.capitalize() if not Campaign.specialization.is_empty() else "Unassigned"
@@ -125,7 +153,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _go(scene_path: String) -> void:
 	if transitioning:
 		return
-	if scene_path == HOTEL_SCENE:
+	if scene_path == HOTEL_SCENE or scene_path == ARCHIVE_SCENE:
 		if not Campaign.select_deployment_kit(Campaign.KITS[kit_selection.selected]):
 			error_label.text = "Invalid deployment kit."
 			return

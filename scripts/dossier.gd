@@ -27,7 +27,7 @@ func _ready() -> void:
 	line(panel, "HANDLER / SECURE MESSAGE", 17, Color(0.50, 0.80, 0.75))
 	line(panel, Handler.relationship(Campaign.intel_choice), 18, Color(0.85, 0.89, 0.89))
 	for operation in [Operations.HOTEL, Operations.ARCHIVE]:
-		var completed := Campaign.archive_completed if operation == Operations.ARCHIVE else not Campaign.intel_choice.is_empty()
+		var completed := Campaign.operation_completed(operation)
 		line(panel, Operations.title_for(operation), 24, Color(0.75, 0.64, 0.43))
 		if not Campaign.available_operations().has(operation):
 			line(panel, "Locked — complete the preceding operation.", 18, Color(0.64, 0.68, 0.70))

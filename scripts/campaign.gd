@@ -234,14 +234,16 @@ func select_operation(operation: String) -> bool:
 	return true
 
 # Earned credits are derived from canonical completions, never from replay counts.
-func operation_reward(operation: String) -> int:
-	var completed := false
+func operation_completed(operation: String) -> bool:
 	match operation:
 		Operations.HOTEL:
-			completed = not intel_choice.is_empty()
+			return not intel_choice.is_empty()
 		Operations.ARCHIVE:
-			completed = archive_completed
-	return reward_for_completion(completed, field_report(operation))
+			return archive_completed
+	return false
+
+func operation_reward(operation: String) -> int:
+	return reward_for_completion(operation_completed(operation), field_report(operation))
 
 func reward_for_completion(completed: bool, report: Dictionary) -> int:
 	if not completed:

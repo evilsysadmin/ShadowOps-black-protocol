@@ -6,6 +6,7 @@ const EFFECTS := {"light_armor": "+15 maximum field health", "utility_rig": "+8 
 var panel: VBoxContainer
 var balance: Label
 var status: Label
+var rook_status: Label
 var buttons: Dictionary = {}
 var pending := ""
 var confirmation: ConfirmationDialog
@@ -30,10 +31,7 @@ func _ready() -> void:
 	for item in ITEMS:
 		if item == "quiet_kit":
 			line("INDEPENDENT SUPPLIER / ROOK", 18)
-			if Campaign.independent_supplier_available():
-				line("Rook: I trade in access, not loyalty. My reconnaissance offers are in the briefing.", 16)
-			else:
-				line("Rook: Bring something to the table before we talk business.", 16)
+			rook_status = line("", 16)
 		line(NAMES[item] + " — " + EFFECTS[item], 20)
 		var button := Button.new()
 		button.custom_minimum_size.y = 42
@@ -64,6 +62,7 @@ func line(content: String, size: int) -> Label:
 
 func refresh() -> void:
 	balance.text = "Available credits: %d" % Campaign.available_credits()
+	rook_status.text = "Rook · %s (+%d)\n%s" % [Campaign.rook_relationship(), Campaign.rook_reputation(), Campaign.rook_message()]
 	for item in ITEMS:
 		var button: Button = buttons[item]
 		var price := int(Campaign.EQUIPMENT_COSTS[item])

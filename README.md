@@ -75,6 +75,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Short text radio transmissions appear on deployment and objective recovery, reflecting the operation and original hotel decision. Independent archive routes use agent status messages rather than claiming handler support. Messages expire after five simulation seconds, pause with the mission and clear before debrief/failure. No recorded voices or new campaign state.
 
+- The campaign supports a one-time handler agreement after the hotel operation: coordination (+1 trust) or autonomy (-1 trust, +1 leverage). It persists independently of the original route decision, with old saves defaulting to no agreement. Conversation UI follows separately.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

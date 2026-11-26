@@ -6,6 +6,8 @@ const SCHEMA := 1
 const MISSION_ID := "unexpected_guest"
 var intel_choice := ""
 var archive_completed := false
+var handler_agreement := ""
+const HANDLER_AGREEMENTS := ["coordinate", "autonomy"]
 var field_reports: Dictionary = {}
 var specialization := ""
 const SPECIALIZATIONS := ["resilience", "infiltration", "mobility"]
@@ -41,6 +43,11 @@ func load_campaign() -> void:
 		if (operation != MISSION_ID and operation != "silent_archive") or (operation == MISSION_ID and saved == "") or (operation == "silent_archive" and not archive) or not valid_field_report(reports[operation]):
 			save_blocked = true
 			return
+	var agreement: Variant = config.get_value("contacts", "handler_agreement", "")
+	if not agreement is String or (agreement != "" and (saved == "" or not HANDLER_AGREEMENTS.has(agreement))):
+		save_blocked = true
+		return
+	handler_agreement = agreement
 	field_reports = reports.duplicate(true)
 	archive_completed = archive
 	intel_choice = saved
@@ -54,7 +61,7 @@ func record_intel(choice: String, report: Dictionary = {}) -> bool:
 	var reports := reports_with(MISSION_ID, report)
 	if not report.is_empty() and reports.is_empty():
 		return false
-	return write_campaign(choice, specialization, archive_completed, reports)
+	return write_campaign(choice, specialization, archive_completed, reports, handler_agreement)
 
 func has_skill_point() -> bool:
 	return not save_blocked and not intel_choice.is_empty() and specialization.is_empty()
@@ -62,15 +69,16 @@ func has_skill_point() -> bool:
 func choose_specialization(value: String) -> bool:
 	if not has_skill_point() or not SPECIALIZATIONS.has(value):
 		return false
-	return write_campaign(intel_choice, value, archive_completed, field_reports)
+	return write_campaign(intel_choice, value, archive_completed, field_reports, handler_agreement)
 
-func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary) -> bool:
+func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary, agreement: String) -> bool:
 	var config := ConfigFile.new()
 	config.set_value("meta", "schema", SCHEMA)
 	config.set_value("missions", MISSION_ID, choice)
 	config.set_value("missions", "silent_archive", completed_archive)
 	config.set_value("missions", "field_reports", reports)
 	config.set_value("progression", "specialization", skill)
+	config.set_value("contacts", "handler_agreement", agreement)
 	if config.save(TEMP_PATH) != OK:
 		return false
 	if DirAccess.rename_absolute(ProjectSettings.globalize_path(TEMP_PATH), ProjectSettings.globalize_path(SAVE_PATH)) != OK:
@@ -78,6 +86,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	intel_choice = choice
 	specialization = skill
 	archive_completed = completed_archive
+	handler_agreement = agreement
 	field_reports = reports.duplicate(true)
 	return true
 
@@ -89,7 +98,7 @@ func record_archive(report: Dictionary = {}) -> bool:
 	var reports := reports_with("silent_archive", report)
 	if not report.is_empty() and reports.is_empty():
 		return false
-	return write_campaign(intel_choice, specialization, true, reports)
+	return write_campaign(intel_choice, specialization, true, reports, handler_agreement)
 
 func valid_field_report(value: Variant) -> bool:
 	if not value is Dictionary or value.size() != 6:
@@ -114,16 +123,20 @@ func field_report(operation: String) -> Dictionary:
 	var report: Dictionary = field_reports.get(operation, {})
 	return report.duplicate(true)
 
+func can_negotiate_handler() -> bool:
+	return not save_blocked and not intel_choice.is_empty() and handler_agreement.is_empty()
+
+func negotiate_handler(choice: String) -> bool:
+	if not can_negotiate_handler() or not HANDLER_AGREEMENTS.has(choice):
+		return false
+	return write_campaign(intel_choice, specialization, archive_completed, field_reports, choice)
+
 func handler_trust() -> int:
-	match intel_choice:
-		"share":
-			return 1
-		"retain":
-			return -1
-	return 0
+	var trust := 1 if intel_choice == "share" else (-1 if intel_choice == "retain" else 0)
+	return trust + (1 if handler_agreement == "coordinate" else (-1 if handler_agreement == "autonomy" else 0))
 
 func independent_leverage() -> int:
-	return 1 if intel_choice == "retain" else 0
+	return (1 if intel_choice == "retain" else 0) + (1 if handler_agreement == "autonomy" else 0)
 
 # Deployment kit is session-local, independent of permanent progression.
 var deployment_kit := "standard"

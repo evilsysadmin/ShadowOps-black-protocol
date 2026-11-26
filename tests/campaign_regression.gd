@@ -30,6 +30,7 @@ func run_regression() -> void:
 	check(operations.report_summary(false, {}) == "Not completed.", "pending operation report")
 	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
+	check(not Campaign.negotiate_handler("coordinate"), "negotiation locked before first operation")
 	check(not Campaign.select_operation("silent_archive"), "archive locked initially")
 	check(not Campaign.record_archive(), "archive cannot complete before hotel")
 	check(not Campaign.has_skill_point(), "fresh campaign has no skill point")
@@ -60,6 +61,12 @@ func run_regression() -> void:
 	check(Campaign.record_archive({"seconds": 1}), "completed archive replay is ignored")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive replay preserves report")
 	check(Campaign.handler_trust() == -1 and Campaign.independent_leverage() == 1, "retain consequences")
+	check(Campaign.can_negotiate_handler(), "negotiation unlocked")
+	check(not Campaign.negotiate_handler("invalid"), "invalid agreement rejected")
+	check(Campaign.negotiate_handler("coordinate"), "agreement saved")
+	check(Campaign.handler_trust() == 0 and Campaign.independent_leverage() == 1, "agreement changes trust")
+	check(not Campaign.negotiate_handler("autonomy"), "agreement cannot be farmed or changed")
+	check(Campaign.intel_choice == "retain", "negotiation preserves route decision")
 	check(Campaign.has_skill_point(), "mission awards one skill point")
 	check(Campaign.record_intel("share"), "replay accepted")
 	check(Campaign.intel_choice == "retain", "replay preserves canonical decision")
@@ -76,7 +83,9 @@ func run_regression() -> void:
 	Campaign.specialization = ""
 	Campaign.archive_completed = false
 	Campaign.field_reports.clear()
+	Campaign.handler_agreement = ""
 	Campaign.load_campaign()
+	check(Campaign.handler_agreement == "coordinate", "agreement survives reload")
 	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")
 	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")

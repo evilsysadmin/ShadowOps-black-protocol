@@ -55,6 +55,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Mission debrief and failure show actual elapsed simulation time, health lost, fired shots, target-hit accuracy (including training targets), and guard alert/defeat. No performance-based rewards or permanent record yet.
 
+- Aim transitions blend smoothly with forward-facing arms; mouse sensitivity reduces while RMB is held. Check shoulder switching next to walls, including crouch and aim. Lateral pivot clearance is checked independently of the rear spring arm.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

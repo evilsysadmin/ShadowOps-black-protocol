@@ -1,6 +1,11 @@
 extends Node3D
 
-enum Stage { RECOVER, EXTRACT, COMPLETE, FAILED }
+enum Stage { RECOVER, EXTRACT, COMPLETE, FAILED, DEBRIEF }
+enum IntelDecision { UNDECIDED, SHARE, RETAIN }
+var intel_decision: IntelDecision = IntelDecision.UNDECIDED
+var handler_trust := 0
+var independent_leverage := 0
+var decision_label: Label
 
 const INTEL_POINT := Vector3(-3.65, 1.38, -3.92)
 const EXIT_POINT := Vector3(0, 0.65, 9)
@@ -37,6 +42,21 @@ func _ready() -> void:
 	prompt.add_theme_color_override("font_shadow_color", Color.BLACK)
 	prompt.add_theme_constant_override("shadow_offset_x", 2)
 	prompt.add_theme_constant_override("shadow_offset_y", 2)
+	decision_label = Label.new()
+	decision_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(decision_label)
+	decision_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	decision_label.offset_left = -320
+	decision_label.offset_right = 320
+	decision_label.offset_top = -65
+	decision_label.offset_bottom = 65
+	decision_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	decision_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	decision_label.add_theme_font_size_override("font_size", 23)
+	decision_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	decision_label.add_theme_constant_override("shadow_offset_x", 2)
+	decision_label.add_theme_constant_override("shadow_offset_y", 2)
+	decision_label.hide()
 	refresh_objective()
 
 func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node3D:
@@ -67,13 +87,19 @@ func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
+	if stage == Stage.DEBRIEF:
+		if event.physical_keycode == KEY_1:
+			resolve_intel(IntelDecision.SHARE)
+		elif event.physical_keycode == KEY_2:
+			resolve_intel(IntelDecision.RETAIN)
+		return
 	if event.physical_keycode == KEY_R and (stage == Stage.COMPLETE or stage == Stage.FAILED):
 		get_tree().reload_current_scene()
 	elif event.physical_keycode == KEY_E and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		interact_requested = true
 
 func _physics_process(_delta: float) -> void:
-	if stage == Stage.COMPLETE or stage == Stage.FAILED:
+	if stage == Stage.COMPLETE or stage == Stage.FAILED or stage == Stage.DEBRIEF:
 		interact_requested = false
 		return
 	var target := INTEL_POINT if stage == Stage.RECOVER else EXIT_POINT
@@ -87,17 +113,31 @@ func _physics_process(_delta: float) -> void:
 			intel.hide()
 			exit.show()
 		else:
-			stage = Stage.COMPLETE
+			stage = Stage.DEBRIEF
 			player.set("controls_enabled", false)
 			exit.hide()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		refresh_objective()
-		if stage != Stage.COMPLETE:
+		if stage == Stage.EXTRACT:
 			prompt.text = ""
 	interact_requested = false
 
+func resolve_intel(choice: IntelDecision) -> void:
+	if stage != Stage.DEBRIEF or intel_decision != IntelDecision.UNDECIDED:
+		return
+	if choice == IntelDecision.SHARE:
+		handler_trust += 1
+	elif choice == IntelDecision.RETAIN:
+		handler_trust -= 1
+		independent_leverage += 1
+	else:
+		return
+	intel_decision = choice
+	stage = Stage.COMPLETE
+	refresh_objective()
+
 func agent_incapacitated() -> void:
-	if stage == Stage.COMPLETE or stage == Stage.FAILED:
+	if stage == Stage.COMPLETE or stage == Stage.FAILED or stage == Stage.DEBRIEF:
 		return
 	stage = Stage.FAILED
 	interact_requested = false
@@ -121,8 +161,15 @@ func refresh_objective() -> void:
 			objective.text = "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
 		Stage.EXTRACT:
 			objective.text = "INTEL SECURED | Return to the starting area"
+		Stage.DEBRIEF:
+			objective.text = "EXTRACTION COMPLETE | Incoming secure transmission"
+			prompt.text = "Choose who controls the information"
+			decision_label.text = "HANDLER: We need the full file. Can I count on you?\n\n[1] Share the file — earn trust\n[2] Retain the file — gain leverage, lose trust"
+			decision_label.show()
 		Stage.COMPLETE:
 			objective.text = "OPERATION COMPLETE | Intel recovered and agent extracted"
+			decision_label.text = "HANDLER TRUST  %+d   |   INDEPENDENT LEVERAGE  %+d" % [handler_trust, independent_leverage]
+			decision_label.show()
 			prompt.text = "Mission complete — press R to replay"
 		Stage.FAILED:
 			objective.text = "OPERATION FAILED | Agent incapacitated"

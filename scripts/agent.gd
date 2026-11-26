@@ -16,6 +16,7 @@ var phase := 0.0
 var stride := 0.0
 var shoulder := 1.0
 var controls_enabled := true
+var field_mode := true
 var combat: Node
 var aiming := false
 var boom: SpringArm3D
@@ -68,14 +69,18 @@ func _ready() -> void:
 	camera.fov = 70.0
 	camera.current = true
 	boom.add_child(camera)
-	combat = Node.new()
-	combat.set_script(preload("res://scripts/combat.gd"))
-	add_child(combat)
+	if field_mode:
+		combat = Node.new()
+		combat.set_script(preload("res://scripts/combat.gd"))
+		add_child(combat)
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
 	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc release"
+	if not field_mode:
+		label.text = "BLACK PROTOCOL | SAFEHOUSE\nWASD · Mouse · E interact · Esc release"
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(label)
 	health_label = Label.new()
 	health_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -87,6 +92,7 @@ func _ready() -> void:
 	health_label.offset_right = 220
 	health_label.add_theme_font_size_override("font_size", 22)
 	refresh_health()
+	health_label.visible = field_mode
 	damage_overlay = ColorRect.new()
 	damage_overlay.color = Color(0.75, 0.08, 0.06, 0.0)
 	damage_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -139,14 +145,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		elif event.physical_keycode == KEY_R and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		elif field_mode and event.physical_keycode == KEY_R and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			combat.request_reload()
 		elif event.physical_keycode == KEY_Q:
 			shoulder *= -1.0
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		elif aiming:
+		elif field_mode and aiming:
 			combat.request_shot()
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * SENSITIVITY)
@@ -156,7 +162,7 @@ func _physics_process(delta: float) -> void:
 	damage_flash = move_toward(damage_flash, 0.0, delta * 1.8)
 	damage_overlay.color.a = damage_flash
 	var axes := Vector2.ZERO
-	aiming = controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	aiming = field_mode and controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 	if controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		axes = Vector2(
 			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
@@ -216,7 +222,7 @@ func can_stand() -> bool:
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
 
 func receive_damage(amount: int) -> void:
-	if not controls_enabled or amount <= 0:
+	if not field_mode or not controls_enabled or amount <= 0:
 		return
 	health = maxi(0, health - amount)
 	damage_flash = 0.30

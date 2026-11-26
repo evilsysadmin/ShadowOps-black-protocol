@@ -3,7 +3,7 @@ config_version=5
 
 [application]
 config/name="ShadowOps: Black Protocol"
-run/main_scene="res://scenes/hotel.tscn"
+run/main_scene="res://scenes/safehouse.tscn"
 
 [autoload]
 Campaign="*res://scripts/campaign.gd"

@@ -6,14 +6,10 @@ const ACCELERATION := 16.0
 const SENSITIVITY := 0.003
 const SUIT := Color(0.105, 0.135, 0.16)
 const TROUSERS := Color(0.085, 0.105, 0.12)
-const SKIN := Color(0.58, 0.39, 0.29)
+const VisualRig = preload("res://scripts/character_visual.gd")
 var pivot: Node3D
-var model: Node3D
+var model: VisualRig
 var camera: Camera3D
-var legs: Array[Node3D] = []
-var arms: Array[Node3D] = []
-var phase := 0.0
-var stride := 0.0
 var shoulder := 1.0
 var controls_enabled := true
 var field_mode := true
@@ -103,43 +99,9 @@ func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func build_model() -> void:
-	model = Node3D.new()
+	model = VisualRig.new()
 	add_child(model)
-	ellipsoid(model, Vector3(0, 1.27, 0), Vector3(0.51, 0.62, 0.34), SUIT)
-	ellipsoid(model, Vector3(0, 0.96, 0), Vector3(0.39, 0.25, 0.29), TROUSERS)
-	ellipsoid(model, Vector3(0, 1.54, 0), Vector3(0.15, 0.16, 0.15), SKIN)
-	ellipsoid(model, Vector3(0, 1.69, 0), Vector3(0.245, 0.31, 0.25), SKIN)
-	ellipsoid(model, Vector3(0, 1.76, 0.025), Vector3(0.25, 0.18, 0.24), Color(0.075, 0.055, 0.045))
-	ellipsoid(model, Vector3(0, 1.40, -0.15), Vector3(0.13, 0.26, 0.06), Color(0.53, 0.55, 0.55))
-	for side in [-1.0, 1.0]:
-		var leg := Node3D.new()
-		leg.position = Vector3(side * 0.12, 0.92, 0)
-		model.add_child(leg)
-		legs.append(leg)
-		ellipsoid(leg, Vector3(0, -0.23, 0), Vector3(0.21, 0.49, 0.22), TROUSERS)
-		ellipsoid(leg, Vector3(0, -0.63, 0), Vector3(0.17, 0.40, 0.18), TROUSERS)
-		ellipsoid(leg, Vector3(0, -0.84, -0.055), Vector3(0.19, 0.14, 0.33), Color(0.045, 0.055, 0.06))
-		var arm := Node3D.new()
-		arm.position = Vector3(side * 0.29, 1.44, 0)
-		model.add_child(arm)
-		arms.append(arm)
-		ellipsoid(arm, Vector3(side * 0.025, -0.16, 0), Vector3(0.20, 0.35, 0.23), SUIT)
-		ellipsoid(arm, Vector3(side * 0.04, -0.44, 0), Vector3(0.15, 0.28, 0.17), SUIT)
-		ellipsoid(arm, Vector3(side * 0.04, -0.61, 0), Vector3(0.13, 0.17, 0.12), SKIN)
-
-func ellipsoid(parent: Node3D, at: Vector3, dimensions: Vector3, color: Color) -> void:
-	var mesh := MeshInstance3D.new()
-	var geometry := SphereMesh.new()
-	geometry.radial_segments = 16
-	geometry.rings = 8
-	mesh.mesh = geometry
-	mesh.scale = dimensions
-	var material := StandardMaterial3D.new()
-	material.albedo_color = color
-	material.roughness = 0.85
-	mesh.material_override = material
-	mesh.position = at
-	parent.add_child(mesh)
+	model.build(SUIT, TROUSERS)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not controls_enabled:
@@ -189,15 +151,7 @@ func _physics_process(delta: float) -> void:
 	boom.spring_length = lerpf(boom.spring_length, 1.9 if aiming else 2.65, 1.0 - exp(-10.0 * delta))
 	camera.fov = lerpf(camera.fov, 55.0 if aiming else 70.0, 1.0 - exp(-10.0 * delta))
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
-	stride = lerpf(stride, clampf(actual_speed / WALK_SPEED, 0.0, 1.35), 1.0 - exp(-12.0 * delta))
-	phase += delta * (5.0 + actual_speed * 1.4)
-	for i in range(2):
-		var swing := sin(phase + float(i) * PI) * stride
-		legs[i].rotation.x = swing * 0.56
-		arms[i].rotation.x = -swing * 0.38
-	if aiming:
-		arms[1].rotation.x = -1.35
-	model.position.y = absf(sin(phase)) * stride * 0.035
+	model.animate_pose(delta, actual_speed, crouched, aiming)
 
 func update_stance(want_crouch: bool, delta: float) -> void:
 	if want_crouch:
@@ -209,7 +163,6 @@ func update_stance(want_crouch: bool, delta: float) -> void:
 		body_capsule.height = height
 		body_collider.position.y = height * 0.5
 	var blend := 1.0 - exp(-12.0 * delta)
-	model.scale.y = lerpf(model.scale.y, 0.64 if crouched else 1.0, blend)
 	pivot.position.y = lerpf(pivot.position.y, 1.02 if crouched else 1.63, blend)
 
 func can_stand() -> bool:

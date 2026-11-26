@@ -9,6 +9,7 @@ var elbows: Array[Node3D] = []
 var phase := 0.0
 var stride := 0.0
 var stance := 0.0
+var aim_blend := 0.0
 
 func build(uniform: Color, trousers: Color, security := false) -> void:
 	var cloth := make_material(uniform)
@@ -55,6 +56,7 @@ func animate_pose(delta: float, speed: float, crouched: bool, aiming: bool) -> v
 	var blend := 1.0 - exp(-12.0 * delta)
 	stride = lerpf(stride, clampf(speed / 3.6, 0.0, 1.25), blend)
 	stance = lerpf(stance, 1.0 if crouched else 0.0, blend)
+	aim_blend = lerpf(aim_blend, 1.0 if aiming else 0.0, blend)
 	phase = fmod(phase + delta * speed * 2.1, TAU)
 	hips.position.y = lerpf(0.89, 0.49, stance) + absf(sin(phase)) * stride * 0.02
 	torso.rotation.x = lerpf(0.0, -0.72, stance)
@@ -63,8 +65,8 @@ func animate_pose(delta: float, speed: float, crouched: bool, aiming: bool) -> v
 		var swing := sin(cycle) * stride
 		thighs[i].rotation.x = lerpf(0.0, 1.0, stance) + swing * lerpf(0.55, 0.24, stance)
 		knees[i].rotation.x = lerpf(0.0, -1.9, stance) - maxf(0.0, sin(cycle)) * stride * 0.5
-		shoulders[i].rotation.x = lerpf(-swing * 0.32, -0.95, 1.0 if aiming else 0.0)
-		elbows[i].rotation.x = -1.15 if aiming else -0.12 - maxf(0.0, -swing) * 0.32
+		shoulders[i].rotation.x = lerpf(-swing * 0.32, 0.95, aim_blend)
+		elbows[i].rotation.x = lerpf(0.12 + maxf(0.0, -swing) * 0.32, 0.62, aim_blend)
 
 func joint(parent: Node3D, at: Vector3) -> Node3D:
 	var node := Node3D.new()

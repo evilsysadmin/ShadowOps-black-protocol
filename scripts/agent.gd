@@ -128,11 +128,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-		elif field_mode and aiming:
+		elif field_mode and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
 			combat.request_shot()
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * SENSITIVITY)
-		pivot.rotation.x = clampf(pivot.rotation.x - event.relative.y * SENSITIVITY, -0.65, 0.55)
+		var sensitivity := SENSITIVITY * (0.65 if field_mode and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT) else 1.0)
+		rotate_y(-event.relative.x * sensitivity)
+		pivot.rotation.x = clampf(pivot.rotation.x - event.relative.y * sensitivity, -0.65, 0.55)
 
 func _physics_process(delta: float) -> void:
 	damage_flash = move_toward(damage_flash, 0.0, delta * 1.8)
@@ -169,11 +170,25 @@ func _physics_process(delta: float) -> void:
 	elif direction.length_squared() > 0.01:
 		var local_direction := transform.basis.inverse() * direction
 		model.rotation.y = lerp_angle(model.rotation.y, atan2(-local_direction.x, -local_direction.z), 1.0 - exp(-12.0 * delta))
-	pivot.position.x = lerpf(pivot.position.x, shoulder * 0.62, 1.0 - exp(-10.0 * delta))
+	update_camera_shoulder(delta)
 	boom.spring_length = lerpf(boom.spring_length, 1.9 if aiming else 2.65, 1.0 - exp(-10.0 * delta))
 	camera.fov = lerpf(camera.fov, 55.0 if aiming else 70.0, 1.0 - exp(-10.0 * delta))
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	model.animate_pose(delta, actual_speed, crouched, aiming)
+
+func update_camera_shoulder(delta: float) -> void:
+	# The spring arm handles rear clearance; independently check the lateral pivot.
+	var desired := lerpf(pivot.position.x, shoulder * 0.62, 1.0 - exp(-10.0 * delta))
+	var origin := global_position + Vector3(0, pivot.position.y, 0)
+	var offset := global_transform.basis.x * desired
+	if offset.length_squared() > 0.0001:
+		var query := PhysicsRayQueryParameters3D.create(origin, origin + offset)
+		query.exclude = [get_rid()]
+		var hit := get_world_3d().direct_space_state.intersect_ray(query)
+		if not hit.is_empty():
+			var point: Vector3 = hit.get("position")
+			desired = signf(desired) * maxf(0.0, origin.distance_to(point) - 0.15)
+	pivot.position.x = desired
 
 func update_cover() -> void:
 	if not field_mode or not controls_enabled:

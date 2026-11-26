@@ -14,7 +14,7 @@ godot --path .
 godot -e --path .
 ```
 
-Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, R reload (or return to the safehouse after mission ends), mouse look, Esc releases the pointer, left click recaptures it.
+Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, C toggle low cover, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, R reload (or return to the safehouse after mission ends), mouse look, Esc releases the pointer, left click recaptures it.
 
 ## Local startup gate
 
@@ -48,6 +48,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 - Briefing allows Standard (24 reserve), Protection (+25 maximum health, 16 reserve), or Supplies (40 reserve). Kits are selected per deployment, never alter the campaign save, and combine with existing specialization. Verify that the safehouse has no kit bonus and that deployment HUD matches the chosen kit.
 
 - Check articulated walk, sprint, crouch and aiming poses on the agent. Guard uses the same visual rig with distinct uniform, patrol animation and alert pose; test its defeat pose. These are procedural placeholders, not skinned character assets.
+
+- Face one of the low brass-topped barriers on the left side of the hotel and press C within reach. Cover constrains movement along the surface, crouches unless aiming, and releases when the barrier ends or C is pressed again. Actual world collision still decides visibility and hit results; no artificial invulnerability. Check both ends and aim/exit transitions.
 
 ## Development policy
 

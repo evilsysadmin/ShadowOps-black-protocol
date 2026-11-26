@@ -19,6 +19,11 @@ var boom: SpringArm3D
 var body_collider: CollisionShape3D
 var body_capsule: CapsuleShape3D
 var crouched := false
+var cover_active := false
+var cover_requested := false
+var cover_normal := Vector3.ZERO
+var cover_body: StaticBody3D
+var cover_label: Label
 const MAX_HEALTH := 100
 var maximum_health := MAX_HEALTH
 var health := MAX_HEALTH
@@ -75,7 +80,7 @@ func _ready() -> void:
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
-	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc release"
+	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · C cover · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc release"
 	if not field_mode:
 		label.text = "BLACK PROTOCOL | SAFEHOUSE\nWASD · Mouse · E interact · Esc release"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -90,6 +95,11 @@ func _ready() -> void:
 	health_label.offset_right = 220
 	health_label.add_theme_font_size_override("font_size", 22)
 	refresh_health()
+	cover_label = Label.new()
+	cover_label.position = Vector2(24, 185)
+	cover_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(cover_label)
+	cover_label.visible = field_mode
 	health_label.visible = field_mode
 	damage_overlay = ColorRect.new()
 	damage_overlay.color = Color(0.75, 0.08, 0.06, 0.0)
@@ -111,6 +121,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		elif field_mode and event.physical_keycode == KEY_R and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			combat.request_reload()
+		elif field_mode and event.physical_keycode == KEY_C and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			cover_requested = true
 		elif event.physical_keycode == KEY_Q:
 			shoulder *= -1.0
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -132,10 +144,14 @@ func _physics_process(delta: float) -> void:
 			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
 			float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
 		).limit_length()
-	update_stance(controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_physical_key_pressed(KEY_CTRL), delta)
+	update_cover()
+	update_stance(controls_enabled and (cover_active and not aiming or (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_physical_key_pressed(KEY_CTRL))), delta)
 	var sprint := Input.is_physical_key_pressed(KEY_SHIFT) and not crouched
 	var speed := crouch_speed if crouched else (2.0 if aiming else (sprint_speed if sprint else WALK_SPEED))
 	var direction := transform.basis * Vector3(axes.x, 0, axes.y)
+	if cover_active:
+		direction = direction.slide(cover_normal)
+		speed = minf(speed, 1.65)
 	velocity.x = move_toward(velocity.x, direction.x * speed, ACCELERATION * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, ACCELERATION * delta)
 	if not is_on_floor():
@@ -143,6 +159,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 	move_and_slide()
+	if cover_active and not cover_contact():
+		leave_cover()
 	if aiming:
 		model.rotation.y = lerp_angle(model.rotation.y, 0.0, 1.0 - exp(-14.0 * delta))
 	elif axes.length_squared() > 0.01:
@@ -152,6 +170,53 @@ func _physics_process(delta: float) -> void:
 	camera.fov = lerpf(camera.fov, 55.0 if aiming else 70.0, 1.0 - exp(-10.0 * delta))
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	model.animate_pose(delta, actual_speed, crouched, aiming)
+
+func update_cover() -> void:
+	if not field_mode or not controls_enabled:
+		leave_cover()
+		cover_requested = false
+		return
+	if cover_requested:
+		cover_requested = false
+		if cover_active:
+			leave_cover()
+		else:
+			var origin := global_position + Vector3(0, 0.75, 0)
+			var forward := -global_transform.basis.z
+			var query := PhysicsRayQueryParameters3D.create(origin, origin + forward * 1.0)
+			query.exclude = [get_rid()]
+			var hit := get_world_3d().direct_space_state.intersect_ray(query)
+			var obstacle := hit.get("collider") as StaticBody3D
+			if is_instance_valid(obstacle) and obstacle.is_in_group("low_cover"):
+				var normal: Vector3 = hit.get("normal", Vector3.ZERO)
+				normal.y = 0.0
+				if normal.length_squared() > 0.5:
+					cover_normal = normal.normalized()
+					cover_body = obstacle
+					cover_active = true
+	if cover_active:
+		if not cover_contact():
+			leave_cover()
+		else:
+			cover_label.text = "IN COVER | C exit · RMB aim"
+	else:
+		cover_label.text = ""
+
+func cover_contact() -> bool:
+	if not is_instance_valid(cover_body):
+		return false
+	var origin := global_position + Vector3(0, 0.75, 0)
+	var query := PhysicsRayQueryParameters3D.create(origin, origin - cover_normal * 1.05)
+	query.exclude = [get_rid()]
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	return hit.get("collider") == cover_body
+
+func leave_cover() -> void:
+	cover_active = false
+	cover_body = null
+	cover_normal = Vector3.ZERO
+	if is_instance_valid(cover_label):
+		cover_label.text = ""
 
 func update_stance(want_crouch: bool, delta: float) -> void:
 	if want_crouch:

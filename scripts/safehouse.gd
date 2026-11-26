@@ -1,6 +1,7 @@
 extends Node3D
 
 const TERMINAL := Vector3(0, 1.25, -3.0)
+const DOSSIER := Vector3(2.65, 1.25, -3.6)
 const WALL := Color(0.19, 0.22, 0.25)
 const WOOD := Color(0.29, 0.19, 0.13)
 const METAL := Color(0.13, 0.17, 0.19)
@@ -39,6 +40,14 @@ func _ready() -> void:
 		light.omni_range = 7.0
 		add_child(light)
 		block(Vector3(0, 3.04, z), Vector3(2.0, 0.08, 0.15), Color(1.0, 0.78, 0.52), false, true)
+	block(Vector3(2.65, 0.52, -4.25), Vector3(1.55, 1.04, 0.8), METAL)
+	block(Vector3(2.65, 1.18, -4.32), Vector3(1.35, 0.26, 0.10), Color(0.18, 0.55, 0.52), false, true)
+	var dossier_sign := Label3D.new()
+	dossier_sign.text = "FIELD RECORDS"
+	dossier_sign.position = Vector3(2.65, 2.05, -4.72)
+	dossier_sign.font_size = 36
+	dossier_sign.pixel_size = 0.004
+	add_child(dossier_sign)
 	var sign_label := Label3D.new()
 	sign_label.text = "OPERATIONS"
 	sign_label.position = Vector3(0, 2.25, -4.75)
@@ -78,11 +87,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _physics_process(_delta: float) -> void:
 	var origin := player.global_position + Vector3(0, 1.25, 0)
-	var nearby := origin.distance_to(TERMINAL) <= 1.65
-	prompt.text = "[E] Operations terminal" if nearby else "Approach the operations terminal"
-	if requested and nearby and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	var operations_distance := origin.distance_to(TERMINAL)
+	var dossier_distance := origin.distance_to(DOSSIER)
+	var destination := ""
+	prompt.text = "Approach operations or field records"
+	if dossier_distance <= 1.65 and dossier_distance < operations_distance:
+		prompt.text = "[E] Field records"
+		destination = "res://scenes/dossier.tscn"
+	elif operations_distance <= 1.65:
+		prompt.text = "[E] Operations terminal"
+		destination = "res://scenes/briefing.tscn"
+	if requested and not destination.is_empty() and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		requested = false
-		get_tree().call_deferred("change_scene_to_file", "res://scenes/briefing.tscn")
+		get_tree().call_deferred("change_scene_to_file", destination)
 		return
 	requested = false
 

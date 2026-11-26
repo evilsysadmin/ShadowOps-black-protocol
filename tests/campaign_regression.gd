@@ -18,6 +18,9 @@ func check(condition: bool, message: String) -> void:
 		printerr("REGRESSION FAIL: " + message)
 
 func run_regression() -> void:
+	var operations := preload("res://scripts/operation_catalog.gd")
+	check(operations.report_summary(false, {}) == "Not completed.", "pending operation report")
+	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
 	check(not Campaign.select_operation("silent_archive"), "archive locked initially")
 	check(not Campaign.record_archive(), "archive cannot complete before hotel")
@@ -37,6 +40,7 @@ func run_regression() -> void:
 	check(not Campaign.record_intel("retain", {"seconds": -1}), "reject invalid field report")
 	check(Campaign.record_intel("retain", hotel_report), "record first mission")
 	check(Campaign.field_report("unexpected_guest") == hotel_report, "hotel performance stored")
+	check(operations.report_summary(true, hotel_report).contains("— accuracy"), "zero shots has no accuracy")
 	hotel_report["seconds"] = 999
 	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "report isolated from caller mutation")
 	check(Campaign.select_operation("silent_archive"), "archive unlocked by hotel")

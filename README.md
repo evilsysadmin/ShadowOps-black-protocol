@@ -16,6 +16,10 @@ godot -e --path .
 
 Controls: WASD/arrows, Shift sprint, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, mouse look, Esc releases the pointer, left click recaptures it.
 
+## Local startup gate
+
+Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup, failing even on logged script errors with a zero engine exit code. It does not validate gameplay.
+
 ## Local smoke checklist
 
 - Initial hotel scene loads and renders (confirmed by user screenshot on initial bootstrap).

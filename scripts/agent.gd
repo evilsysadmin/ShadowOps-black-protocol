@@ -15,6 +15,10 @@ var arms: Array[Node3D] = []
 var phase := 0.0
 var stride := 0.0
 var shoulder := 1.0
+var controls_enabled := true
+var combat: Node
+var aiming := false
+var boom: SpringArm3D
 
 func _ready() -> void:
 	var collider := CollisionShape3D.new()
@@ -29,7 +33,7 @@ func _ready() -> void:
 	pivot.position = Vector3(0.62, 1.63, 0)
 	pivot.rotation.x = -0.10
 	add_child(pivot)
-	var boom := SpringArm3D.new()
+	boom = SpringArm3D.new()
 	boom.spring_length = 2.65
 	boom.margin = 0.15
 	boom.add_excluded_object(get_rid())
@@ -41,11 +45,14 @@ func _ready() -> void:
 	camera.fov = 70.0
 	camera.current = true
 	boom.add_child(camera)
+	combat = Node.new()
+	combat.set_script(preload("res://scripts/combat.gd"))
+	add_child(combat)
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
-	label.text = "BLACK PROTOCOL | LOCOMOTION TEST\nWASD / arrows · Shift: sprint · Q: shoulder\nMouse: look · Esc: release · Click: capture"
+	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Q shoulder · E interact\nRMB aim · LMB fire · Esc release"
 	hud.add_child(label)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -89,26 +96,32 @@ func ellipsoid(parent: Node3D, at: Vector3, dimensions: Vector3, color: Color) -
 	parent.add_child(mesh)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not controls_enabled:
+		return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_ESCAPE:
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		elif event.physical_keycode == KEY_Q:
 			shoulder *= -1.0
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		if Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		elif aiming:
+			combat.request_shot()
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		rotate_y(-event.relative.x * SENSITIVITY)
 		pivot.rotation.x = clampf(pivot.rotation.x - event.relative.y * SENSITIVITY, -0.65, 0.55)
 
 func _physics_process(delta: float) -> void:
 	var axes := Vector2.ZERO
-	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+	aiming = controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
+	if controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		axes = Vector2(
 			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
 			float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
 		).limit_length()
 	var sprint := Input.is_physical_key_pressed(KEY_SHIFT)
-	var speed := RUN_SPEED if sprint else WALK_SPEED
+	var speed := 2.0 if aiming else (RUN_SPEED if sprint else WALK_SPEED)
 	var direction := transform.basis * Vector3(axes.x, 0, axes.y)
 	velocity.x = move_toward(velocity.x, direction.x * speed, ACCELERATION * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, ACCELERATION * delta)
@@ -117,9 +130,13 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 	move_and_slide()
-	if axes.length_squared() > 0.01:
+	if aiming:
+		model.rotation.y = lerp_angle(model.rotation.y, 0.0, 1.0 - exp(-14.0 * delta))
+	elif axes.length_squared() > 0.01:
 		model.rotation.y = lerp_angle(model.rotation.y, atan2(-axes.x, -axes.y), 1.0 - exp(-12.0 * delta))
 	pivot.position.x = lerpf(pivot.position.x, shoulder * 0.62, 1.0 - exp(-10.0 * delta))
+	boom.spring_length = lerpf(boom.spring_length, 1.9 if aiming else 2.65, 1.0 - exp(-10.0 * delta))
+	camera.fov = lerpf(camera.fov, 55.0 if aiming else 70.0, 1.0 - exp(-10.0 * delta))
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	stride = lerpf(stride, clampf(actual_speed / WALK_SPEED, 0.0, 1.35), 1.0 - exp(-12.0 * delta))
 	phase += delta * (5.0 + actual_speed * 1.4)
@@ -127,4 +144,6 @@ func _physics_process(delta: float) -> void:
 		var swing := sin(phase + float(i) * PI) * stride
 		legs[i].rotation.x = swing * 0.56
 		arms[i].rotation.x = -swing * 0.38
+	if aiming:
+		arms[1].rotation.x = -1.35
 	model.position.y = absf(sin(phase)) * stride * 0.035

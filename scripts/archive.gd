@@ -3,6 +3,9 @@ extends Node3D
 const STONE := Color(0.21, 0.25, 0.28)
 const STEEL := Color(0.14, 0.19, 0.22)
 const LIGHT := Color(0.57, 0.82, 0.87)
+const ASSISTED_SPAWN := Vector3(-5.5, 0.05, -3.5)
+const INDEPENDENT_SPAWN := Vector3(5.5, 0.05, 7.0)
+const LEDGER_POINT := Vector3(-3.0, 1.10, -5.75)
 
 func _ready() -> void:
 	var world := WorldEnvironment.new()
@@ -36,7 +39,8 @@ func _ready() -> void:
 		add_child(light)
 		block(Vector3(0, 3.32, z), Vector3(3.0, 0.07, 0.17), LIGHT, false, true)
 	var assisted := Campaign.intel_choice == "share"
-	var spawn := Vector3(-5.5, 0.05, -3.5) if assisted else Vector3(5.5, 0.05, 7.0)
+	var spawn := ASSISTED_SPAWN if assisted else INDEPENDENT_SPAWN
+	add_wayfinding(assisted)
 	var player := CharacterBody3D.new()
 	player.name = "Agent"
 	player.set_script(preload("res://scripts/agent.gd"))
@@ -46,14 +50,31 @@ func _ready() -> void:
 	mission.name = "Mission"
 	mission.set_script(preload("res://scripts/mission.gd"))
 	mission.set("archive_operation", true)
-	mission.set("intel_point", Vector3(-3.0, 1.10, -5.75))
+	mission.set("intel_point", LEDGER_POINT)
 	mission.set("exit_point", Vector3(spawn.x, 0.65, spawn.z))
 	add_child(mission)
 	var guard := CharacterBody3D.new()
 	guard.name = "Guard"
 	guard.set_script(preload("res://scripts/guard.gd"))
-	guard.position = Vector3(0.8, 0.05, -6)
+	guard.position = Vector3(0, 0.05, -6)
+	var route: Array[Vector3] = [Vector3(0, 0, -6), Vector3(0, 0, 5), Vector3(2, 0, 5), Vector3(0, 0, 5)]
+	guard.set("patrol_points", route)
 	add_child(guard)
+
+func add_wayfinding(assisted: bool) -> void:
+	var entry := Label3D.new()
+	entry.text = "SERVICE ACCESS" if assisted else "MAIN ACCESS"
+	entry.position = (ASSISTED_SPAWN if assisted else INDEPENDENT_SPAWN) + Vector3(0, 2.15, 0)
+	entry.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	entry.font_size = 36
+	entry.pixel_size = 0.004
+	add_child(entry)
+	var records := Label3D.new()
+	records.text = "RECORDS / B-02"
+	records.position = Vector3(-3.0, 2.25, -6.9)
+	records.font_size = 48
+	records.pixel_size = 0.006
+	add_child(records)
 
 func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow := false) -> Node3D:
 	var root := Node3D.new()

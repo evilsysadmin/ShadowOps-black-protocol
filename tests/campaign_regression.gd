@@ -102,6 +102,10 @@ func run_regression() -> void:
 		check(not bool(field_agent.get("cover_active")), "leave cover at edge")
 	hotel.queue_free()
 	await get_tree().process_frame
+	await check_archive_route("retain", Vector3(5.5, 0.05, 7.0))
+	await check_archive_route("share", Vector3(-5.5, 0.05, -3.5))
+	Campaign.load_campaign()
+	check(Campaign.intel_choice == "retain", "route test restores canonical saved choice")
 	var safehouse: Node = preload("res://scenes/safehouse.tscn").instantiate()
 	add_child(safehouse)
 	await get_tree().physics_frame
@@ -116,3 +120,29 @@ func run_regression() -> void:
 	if failures == 0:
 		print("CAMPAIGN REGRESSION PASSED")
 	get_tree().quit(0 if failures == 0 else 1)
+
+func check_archive_route(choice: String, expected: Vector3) -> void:
+	# Only the isolated test changes the in-memory choice; never write it.
+	Campaign.intel_choice = choice
+	var archive: Node = preload("res://scenes/archive.tscn").instantiate()
+	add_child(archive)
+	var agent := archive.get_node_or_null("Agent") as CharacterBody3D
+	var mission := archive.get_node_or_null("Mission")
+	var guard := archive.get_node_or_null("Guard")
+	check(is_instance_valid(agent) and is_instance_valid(mission) and is_instance_valid(guard), "archive entities exist")
+	if is_instance_valid(agent) and is_instance_valid(mission) and is_instance_valid(guard):
+		agent.set_physics_process(false)
+		guard.set_physics_process(false)
+		check(agent.position.is_equal_approx(expected), choice + " correct spawn")
+		var extraction: Vector3 = mission.get("exit_point")
+		check(is_equal_approx(extraction.x, expected.x) and is_equal_approx(extraction.z, expected.z), choice + " matching extraction")
+		check(guard.get("patrol_points").size() == 4, "archive-specific patrol")
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		check(bool(mission.call("can_reach", extraction)), choice + " extraction reachable at spawn")
+		agent.global_position = Vector3(-3.0, 0.05, -5.0)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		check(bool(mission.call("can_reach", mission.get("intel_point"))), choice + " ledger reachable")
+	archive.queue_free()
+	await get_tree().process_frame

@@ -50,6 +50,8 @@ func _ready() -> void:
 		maximum_health += Campaign.kit_health_bonus()
 		if Campaign.owns_equipment("light_armor"):
 			maximum_health += 15
+		if Campaign.owns_equipment("quiet_kit"):
+			crouch_speed += 0.25
 	health = maximum_health
 	var collider := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()

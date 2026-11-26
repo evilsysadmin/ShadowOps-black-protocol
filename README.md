@@ -81,6 +81,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Persistent armory inventory supports light armor (80 credits) and utility rig (70 credits). Ownership is unique, purchases debit the same canonical balance as reconnaissance, and incompatible or overspent saves are blocked. The ARMORY terminal is on the left of the safehouse operations desk. Purchases require confirmation and are automatically equipped on field deployments only: armor adds 15 maximum health and utility rig adds 8 reserve rounds, stacking with kits and specialization. The briefing shows owned bonuses. Local smoke includes the armory scene and field stat regressions.
 
+- Rook, an independent supplier, offers a permanent movement kit for 65 credits through the armory. Access requires at least one independent leverage point (retaining the hotel file or choosing autonomy). The kit adds 0.25 to field crouch speed, stacking with specialization. It does not change guard visibility rules. Ownership and expenses use the existing inventory save and balance.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

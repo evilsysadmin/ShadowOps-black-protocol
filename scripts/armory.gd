@@ -1,8 +1,8 @@
 extends Control
 
-const ITEMS := ["light_armor", "utility_rig"]
-const NAMES := {"light_armor": "Light armor", "utility_rig": "Utility rig"}
-const EFFECTS := {"light_armor": "+15 maximum field health", "utility_rig": "+8 reserve rounds per deployment"}
+const ITEMS := ["light_armor", "utility_rig", "quiet_kit"]
+const NAMES := {"light_armor": "Light armor", "utility_rig": "Utility rig", "quiet_kit": "Independent movement kit"}
+const EFFECTS := {"light_armor": "+15 maximum field health", "utility_rig": "+8 reserve rounds per deployment", "quiet_kit": "+0.25 crouch speed in the field"}
 var panel: VBoxContainer
 var balance: Label
 var status: Label
@@ -28,6 +28,8 @@ func _ready() -> void:
 	line("ARMORY", 34)
 	balance = line("", 22)
 	for item in ITEMS:
+		if item == "quiet_kit":
+			line("INDEPENDENT SUPPLIER / ROOK", 18)
 		line(NAMES[item] + " — " + EFFECTS[item], 20)
 		var button := Button.new()
 		button.custom_minimum_size.y = 42
@@ -64,6 +66,9 @@ func refresh() -> void:
 		var owned := Campaign.owns_equipment(item)
 		button.text = "Owned · automatically equipped in field" if owned else "Purchase · %d credits" % price
 		button.disabled = owned or Campaign.save_blocked or Campaign.intel_choice.is_empty() or Campaign.available_credits() < price
+		if item == "quiet_kit" and not Campaign.independent_supplier_available():
+			button.text = "Locked · requires independent leverage"
+			button.disabled = true
 	if Campaign.save_blocked:
 		status.text = "Campaign save unavailable."
 	elif Campaign.intel_choice.is_empty():
@@ -71,6 +76,8 @@ func refresh() -> void:
 
 func request_purchase(item: String) -> void:
 	if transitioning or not ITEMS.has(item) or Campaign.owns_equipment(item):
+		return
+	if item == "quiet_kit" and not Campaign.independent_supplier_available():
 		return
 	if Campaign.save_blocked or Campaign.available_credits() < int(Campaign.EQUIPMENT_COSTS[item]):
 		return

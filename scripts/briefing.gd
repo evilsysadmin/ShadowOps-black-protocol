@@ -73,6 +73,8 @@ func _ready() -> void:
 		bonuses.append("+15 health")
 	if Campaign.owns_equipment("utility_rig"):
 		bonuses.append("+8 reserve rounds")
+	if Campaign.owns_equipment("quiet_kit"):
+		bonuses.append("+0.25 crouch speed")
 	if not bonuses.is_empty():
 		add_line(panel, "Owned equipment: " + ", ".join(bonuses), 16, Color(0.66, 0.83, 0.80))
 	var audio_settings := HBoxContainer.new()

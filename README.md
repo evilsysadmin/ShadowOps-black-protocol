@@ -14,7 +14,7 @@ godot --path .
 godot -e --path .
 ```
 
-Controls: WASD/arrows, Shift sprint, Q switch shoulder, mouse look, Esc releases the pointer, left click recaptures it.
+Controls: WASD/arrows, Shift sprint, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, mouse look, Esc releases the pointer, left click recaptures it.
 
 ## Local smoke checklist
 
@@ -23,6 +23,9 @@ Controls: WASD/arrows, Shift sprint, Q switch shoulder, mouse look, Esc releases
 - Check turning and limb animation; legs should stop swinging against a wall.
 - Q switches camera shoulders; wall collisions and mouse capture/release behave correctly.
 - No runtime errors in the debugger.
+
+- Check training target hit feedback and that solid obstacles block shots.
+- Guard patrols; suspicion rises with visible player and falls when line of sight breaks. Detection ends the mission; R retries. Guard can be defeated using the test combat system.
 
 ## Development policy
 

@@ -34,6 +34,11 @@ func _ready() -> void:
 	target.set_script(preload("res://scripts/training_target.gd"))
 	target.position = Vector3(2.6, 0, -6.8)
 	add_child(target)
+	var guard := CharacterBody3D.new()
+	guard.name = "Guard"
+	guard.set_script(preload("res://scripts/guard.gd"))
+	guard.position = Vector3(0.8, 0.05, -6.0)
+	add_child(guard)
 
 func build_shell() -> void:
 	box(Vector3(0, -0.15, 0), Vector3(12, 0.3, 24), STONE)

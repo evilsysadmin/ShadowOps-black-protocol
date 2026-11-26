@@ -7,6 +7,8 @@ var campaign_replay := false
 var record_failed := false
 var specialization_save_failed := false
 var decision_label: Label
+var report_label: Label
+var elapsed_seconds := 0.0
 
 const INTEL_POINT := Vector3(-3.65, 1.38, -3.92)
 const EXIT_POINT := Vector3(0, 0.65, 9)
@@ -59,6 +61,18 @@ func _ready() -> void:
 	decision_label.add_theme_constant_override("shadow_offset_x", 2)
 	decision_label.add_theme_constant_override("shadow_offset_y", 2)
 	decision_label.hide()
+	report_label = Label.new()
+	report_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(report_label)
+	report_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	report_label.offset_left = -390
+	report_label.offset_right = -24
+	report_label.offset_top = 24
+	report_label.offset_bottom = 160
+	report_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	report_label.add_theme_font_size_override("font_size", 18)
+	report_label.add_theme_color_override("font_color", Color(0.75, 0.89, 0.85))
+	report_label.hide()
 	refresh_objective()
 
 func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node3D:
@@ -113,10 +127,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.physical_keycode == KEY_E and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		interact_requested = true
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if stage == Stage.COMPLETE or stage == Stage.FAILED or stage == Stage.DEBRIEF:
 		interact_requested = false
 		return
+	elapsed_seconds += delta
 	var target := INTEL_POINT if stage == Stage.RECOVER else EXIT_POINT
 	var reachable := can_reach(target)
 	prompt.text = ""
@@ -173,6 +188,8 @@ func can_reach(target: Vector3) -> bool:
 	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 func refresh_objective() -> void:
+	if stage == Stage.DEBRIEF or stage == Stage.COMPLETE or stage == Stage.FAILED:
+		refresh_report()
 	match stage:
 		Stage.RECOVER:
 			objective.text = "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
@@ -204,3 +221,20 @@ func refresh_objective() -> void:
 		Stage.FAILED:
 			objective.text = "OPERATION FAILED | Agent incapacitated"
 			prompt.text = "Compromised — press R to return to safehouse"
+
+func refresh_report() -> void:
+	var combat: Node = player.get("combat")
+	var shots := int(combat.get("shots_fired"))
+	var hits := int(combat.get("target_hits"))
+	var damage := maxi(0, int(player.get("maximum_health")) - int(player.get("health")))
+	var guard := get_parent().get_node_or_null("Guard")
+	var security := "Unavailable"
+	if is_instance_valid(guard):
+		var alerted := bool(guard.get("ever_alerted"))
+		var down := int(guard.get("health")) <= 0
+		security = "Alerted" if alerted else "No full alert"
+		if down:
+			security += " / guard down"
+	var accuracy := "—" if shots == 0 else "%d%%" % roundi(100.0 * float(hits) / float(shots))
+	report_label.text = "FIELD REPORT\nElapsed: %d s · Damage: %d\nShots: %d · Target accuracy: %s\nSecurity: %s" % [int(elapsed_seconds), damage, shots, accuracy, security]
+	report_label.show()

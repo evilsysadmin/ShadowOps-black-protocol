@@ -16,6 +16,7 @@ enum GuardState { PATROL, SUSPICIOUS, ALERT, SEARCH, DOWN }
 var state: GuardState = GuardState.PATROL
 var attack_timer := 0.0
 var search_remaining := 0.0
+var ever_alerted := false
 const SEARCH_DURATION := 4.0
 const ATTACK_INTERVAL := 1.35
 const ATTACK_DAMAGE := 15
@@ -81,6 +82,8 @@ func _physics_process(delta: float) -> void:
 		suspicion = maxf(0.0, suspicion - delta * 0.3)
 		state = GuardState.SUSPICIOUS if suspicion > 0.0 else GuardState.PATROL
 		patrol(delta)
+	if state == GuardState.ALERT:
+		ever_alerted = true
 	rotation.y = atan2(-facing.x, -facing.z)
 	if not is_on_floor():
 		velocity.y -= 9.8 * delta

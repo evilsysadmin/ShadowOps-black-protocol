@@ -51,6 +51,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Face one of the low brass-topped barriers on the left side of the hotel and press C within reach. Cover constrains movement along the surface, crouches unless aiming, and releases when the barrier ends or C is pressed again. Actual world collision still decides visibility and hit results; no artificial invulnerability. Check both ends and aim/exit transitions.
 
+- Mission debrief and failure show actual elapsed simulation time, health lost, fired shots, target-hit accuracy (including training targets), and guard alert/defeat. No performance-based rewards or permanent record yet.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

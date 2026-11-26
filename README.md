@@ -85,6 +85,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Rook has independent standing derived from actual purchases from him (+1 each for his movement kit and his reconnaissance). General leverage unlocks access but does not count as reputation. The armory and dossier show the relationship; messages react to recorded dealings. Existing saves derive the same standing without a schema change.
 
+- Rook offers an optional one-time Silent Archive contract via the armory before the first completion. Accept explicitly, then complete the operation without full alert to earn 35 additional credits and one Rook reputation point. The canonical report settles the result; failures before successful extraction can be retried, but replays after completion cannot change it. Legacy completions cannot retroactively accept it. The briefing shows an accepted contract.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

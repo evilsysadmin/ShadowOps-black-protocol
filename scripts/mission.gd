@@ -109,7 +109,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			refresh_objective()
 			return
 	if event.physical_keycode == KEY_R and (stage == Stage.COMPLETE or stage == Stage.FAILED):
-		get_tree().reload_current_scene()
+		get_tree().change_scene_to_file("res://scenes/safehouse.tscn")
 	elif event.physical_keycode == KEY_E and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		interact_requested = true
 
@@ -200,7 +200,7 @@ func refresh_objective() -> void:
 			elif not Campaign.specialization.is_empty():
 				decision_label.text += "\nSpecialization: " + Campaign.specialization.capitalize() + " (active next deployment)"
 			decision_label.show()
-			prompt.text = "Mission complete — press R to replay"
+			prompt.text = "Mission complete — press R to return to safehouse"
 		Stage.FAILED:
 			objective.text = "OPERATION FAILED | Agent incapacitated"
-			prompt.text = "Compromised — press R to retry"
+			prompt.text = "Compromised — press R to return to safehouse"

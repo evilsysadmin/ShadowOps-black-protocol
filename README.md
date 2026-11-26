@@ -22,6 +22,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 ## Local smoke checklist
 
+- Game starts in the walkable safehouse. Approach the operations desk and press E to deploy; no combat in the safehouse. R after mission completion/failure returns to the safehouse. Verify that campaign state is retained and a new deployment resets mission resources.
+
 - Initial hotel scene loads and renders (confirmed by user screenshot on initial bootstrap).
 - Check forward, backward and diagonal movement, sprint and stopping.
 - Check turning and limb animation; legs should stop swinging against a wall.

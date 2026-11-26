@@ -97,6 +97,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Guard detection distinguishes curiosity from a search after full alert. Only the latter reacquires immediately. A surviving hit records full alert immediately rather than waiting for the next physics tick. The alert history remains canonical for rewards and contracts. Local regressions cover detection transitions.
 
+- F activates a fictional one-use distraction gadget during field operations. A patrolling or suspicious guard enters the existing temporary investigation state; visual detection still applies. An alerted, down or already investigating guard rejects the request without consuming the charge. The gadget cannot clear recorded alerts or affect the safehouse. Local regressions cover charge use, rejected states and alert history.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

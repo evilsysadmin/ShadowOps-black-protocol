@@ -27,6 +27,9 @@ var cover_requested := false
 var cover_normal := Vector3.ZERO
 var cover_body: StaticBody3D
 var cover_label: Label
+var distraction_available := true
+var distraction_requested := false
+var distraction_label: Label
 const MAX_HEALTH := 100
 var maximum_health := MAX_HEALTH
 var health := MAX_HEALTH
@@ -89,7 +92,7 @@ func _ready() -> void:
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
-	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · C cover · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc pause"
+	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · C cover · Q shoulder · E interact\nRMB aim · LMB fire · R reload · F distraction · Esc pause"
 	if not field_mode:
 		label.text = "BLACK PROTOCOL | SAFEHOUSE\nWASD · Mouse · E interact · Esc pause"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -108,6 +111,12 @@ func _ready() -> void:
 	cover_label.position = Vector2(24, 185)
 	cover_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(cover_label)
+	distraction_label = Label.new()
+	distraction_label.position = Vector2(24, 215)
+	distraction_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(distraction_label)
+	distraction_label.visible = field_mode
+	refresh_distraction()
 	cover_label.visible = field_mode
 	health_label.visible = field_mode
 	damage_overlay = ColorRect.new()
@@ -133,6 +142,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			combat.request_reload()
 		elif field_mode and event.physical_keycode == KEY_C and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			cover_requested = true
+		elif field_mode and event.physical_keycode == KEY_F and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			distraction_requested = true
 		elif event.physical_keycode == KEY_Q:
 			shoulder *= -1.0
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -155,6 +166,10 @@ func _physics_process(delta: float) -> void:
 			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
 			float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
 		).limit_length()
+	if distraction_requested:
+		distraction_requested = false
+		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+			use_distraction()
 	update_cover()
 	update_stance(controls_enabled and (cover_active and not aiming or (Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_physical_key_pressed(KEY_CTRL))), delta)
 	var sprint := Input.is_physical_key_pressed(KEY_SHIFT) and not crouched
@@ -294,3 +309,19 @@ func refresh_health() -> void:
 func eye_height() -> float:
 	return 0.88 if crouched else 1.45
 
+
+func refresh_distraction() -> void:
+	distraction_label.text = "DISTRACTION [F] · 1 available" if distraction_available else "DISTRACTION · spent"
+
+func use_distraction() -> bool:
+	if not field_mode or not controls_enabled or not distraction_available:
+		return false
+	var guard := get_parent().get_node_or_null("Guard")
+	if not is_instance_valid(guard) or not guard.has_method("request_distraction"):
+		return false
+	if not bool(guard.call("request_distraction")):
+		distraction_label.text = "DISTRACTION · unavailable now (charge retained)"
+		return false
+	distraction_available = false
+	refresh_distraction()
+	return true

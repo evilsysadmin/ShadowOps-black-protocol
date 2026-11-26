@@ -103,6 +103,13 @@ func enter_alert(reset_attack: bool) -> void:
 	if reset_attack:
 		attack_timer = ATTACK_INTERVAL
 
+# Fictional one-charge gadget: causes a temporary investigation, never erases alert history.
+func request_distraction() -> bool:
+	if health <= 0 or state not in [GuardState.PATROL, GuardState.SUSPICIOUS]:
+		return false
+	begin_search(false)
+	return true
+
 func begin_search(from_alert: bool) -> void:
 	state = GuardState.SEARCH
 	search_from_alert = from_alert
@@ -179,7 +186,7 @@ func update_status() -> void:
 		status.text = "ALERT"
 		status.modulate = Color(1.0, 0.26, 0.20)
 	elif state == GuardState.SEARCH:
-		status.text = "SEARCHING"
+		status.text = "SEARCHING" if search_from_alert else "INVESTIGATING"
 		status.modulate = Color(1.0, 0.78, 0.28)
 	elif suspicion > 0.0:
 		status.text = "SUSPICION %d%%" % int(suspicion * 100.0)

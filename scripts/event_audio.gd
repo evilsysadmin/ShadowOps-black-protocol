@@ -34,5 +34,6 @@ func build_cue(key: String, duration: float, start_hz: float, end_hz: float, amp
 
 func cue(key: String) -> void:
 	var voice := voices.get(key) as AudioStreamPlayer
-	if is_instance_valid(voice):
+	if is_instance_valid(voice) and GameSettings.effects_volume > 0.0:
+		voice.volume_db = linear_to_db(GameSettings.effects_volume)
 		voice.play()

@@ -9,6 +9,7 @@ var archive_completed := false
 var handler_agreement := ""
 var archive_intel_cost := 0
 var rook_contract_accepted := false
+var rook_trust_penalty_enabled := false
 var handler_contract_accepted := false
 const HANDLER_CONTRACT_REWARD := 30
 const ROOK_CONTRACT_REWARD := 35
@@ -77,6 +78,10 @@ func load_campaign() -> void:
 	if not contract is bool or (contract and (saved == "" or (saved != "retain" and agreement != "autonomy"))):
 		save_blocked = true
 		return
+	var penalty: Variant = config.get_value("contacts", "rook_trust_penalty_enabled", false)
+	if not penalty is bool or (penalty and not contract):
+		save_blocked = true
+		return
 	var official_contract: Variant = config.get_value("contacts", "handler_contract_accepted", false)
 	if not official_contract is bool or (official_contract and (saved == "" or contract)):
 		save_blocked = true
@@ -88,6 +93,7 @@ func load_campaign() -> void:
 		save_blocked = true
 		return
 	rook_contract_accepted = contract
+	rook_trust_penalty_enabled = penalty
 	handler_contract_accepted = official_contract
 	equipment_owned = validated
 	archive_intel_cost = paid
@@ -118,6 +124,7 @@ func choose_specialization(value: String) -> bool:
 func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary, agreement: String, intel_cost: int = -1, new_equipment: Variant = null, contract: Variant = null, official_contract: Variant = null) -> bool:
 	var official_accepted := handler_contract_accepted if official_contract == null else bool(official_contract)
 	var accepted := rook_contract_accepted if contract == null else bool(contract)
+	var penalty := rook_trust_penalty_enabled or (accepted and not rook_contract_accepted)
 	var paid := archive_intel_cost if intel_cost == -1 else intel_cost
 	var owned: Array[String] = equipment_owned.duplicate()
 	if new_equipment != null:
@@ -130,6 +137,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	config.set_value("progression", "specialization", skill)
 	config.set_value("contacts", "handler_agreement", agreement)
 	config.set_value("contacts", "rook_contract_accepted", accepted)
+	config.set_value("contacts", "rook_trust_penalty_enabled", penalty)
 	config.set_value("contacts", "handler_contract_accepted", official_accepted)
 	config.set_value("economy", "archive_intel_cost", paid)
 	config.set_value("economy", "equipment_owned", owned)
@@ -141,6 +149,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	specialization = skill
 	archive_completed = completed_archive
 	rook_contract_accepted = accepted
+	rook_trust_penalty_enabled = penalty
 	handler_contract_accepted = official_accepted
 	equipment_owned = owned
 	archive_intel_cost = paid
@@ -191,7 +200,7 @@ func negotiate_handler(choice: String) -> bool:
 
 func handler_trust() -> int:
 	var trust := 1 if intel_choice == "share" else (-1 if intel_choice == "retain" else 0)
-	return trust + (1 if handler_agreement == "coordinate" else (-1 if handler_agreement == "autonomy" else 0)) + (1 if handler_contract_reward() > 0 else 0) - (1 if rook_contract_reward() > 0 else 0)
+	return trust + (1 if handler_agreement == "coordinate" else (-1 if handler_agreement == "autonomy" else 0)) + (1 if handler_contract_reward() > 0 else 0) - (1 if rook_trust_penalty_enabled and rook_contract_reward() > 0 else 0)
 
 func independent_leverage() -> int:
 	return (1 if intel_choice == "retain" else 0) + (1 if handler_agreement == "autonomy" else 0)
@@ -340,7 +349,7 @@ func rook_contract_status() -> String:
 		if not archive_completed:
 			return "Accepted: complete Silent Archive without full alert."
 		if rook_contract_reward() > 0:
-			return "Fulfilled: +35 credits, +1 Rook reputation, -1 handler trust."
+			return "Fulfilled: +35 credits, +1 Rook reputation" + (", -1 handler trust." if rook_trust_penalty_enabled else ".")
 		return "Closed: the first completion did not meet the condition."
 	if handler_contract_accepted:
 		return "Unavailable: official contract already accepted."
@@ -380,3 +389,10 @@ func handler_contract_status() -> String:
 	if can_accept_handler_contract():
 		return "Available: +30 credits and +1 trust for no damage."
 	return "Locked: complete Unexpected Guest."
+
+func archive_contract_summary() -> String:
+	if rook_contract_accepted:
+		return "Rook: " + rook_contract_status()
+	if handler_contract_accepted:
+		return "Handler: " + handler_contract_status()
+	return ""

@@ -284,6 +284,11 @@ func refresh_report() -> void:
 			security += " / guard down"
 	var accuracy := "—" if shots == 0 else "%d%%" % roundi(100.0 * float(hits) / float(shots))
 	report_label.text = "FIELD REPORT\nElapsed: %d s · Damage: %d\nShots: %d · Target accuracy: %s\nSecurity: %s" % [int(elapsed_seconds), damage, shots, accuracy, security]
+	if archive_operation and stage == Stage.COMPLETE and not record_failed:
+		var contract := Campaign.archive_contract_summary()
+		if not contract.is_empty():
+			report_label.text += "\n" + ("Archived contract: " if campaign_replay else "Contract: ") + contract
+			report_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	report_label.show()
 
 func show_radio(message: String) -> void:

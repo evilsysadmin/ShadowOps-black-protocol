@@ -88,6 +88,7 @@ func _physics_process(_delta: float) -> void:
 			exit.show()
 		else:
 			stage = Stage.COMPLETE
+			player.set("controls_enabled", false)
 			exit.hide()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		refresh_objective()

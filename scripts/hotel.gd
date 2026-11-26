@@ -30,6 +30,10 @@ func _ready() -> void:
 	mission.name = "Mission"
 	mission.set_script(preload("res://scripts/mission.gd"))
 	add_child(mission)
+	var target := StaticBody3D.new()
+	target.set_script(preload("res://scripts/training_target.gd"))
+	target.position = Vector3(2.6, 0, -6.8)
+	add_child(target)
 
 func build_shell() -> void:
 	box(Vector3(0, -0.15, 0), Vector3(12, 0.3, 24), STONE)

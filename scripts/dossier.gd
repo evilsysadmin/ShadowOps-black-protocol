@@ -36,6 +36,10 @@ func _ready() -> void:
 			line(panel, Operations.report_summary(completed, report), 19, Color(0.85, 0.89, 0.89))
 			if completed:
 				line(panel, "%s · %d credits earned" % [Handler.assessment(report), Campaign.operation_reward(operation)], 16, Color(0.66, 0.83, 0.80))
+			if operation == Operations.ARCHIVE:
+				var contract := Campaign.archive_contract_summary()
+				if not contract.is_empty():
+					line(panel, contract, 16, Color(0.75, 0.64, 0.43))
 	line(panel, "Only the first recorded successful completion is archived.", 16, Color(0.64, 0.68, 0.70))
 	if not Campaign.intel_choice.is_empty():
 		var contact := Button.new()

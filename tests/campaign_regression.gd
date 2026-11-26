@@ -126,10 +126,11 @@ func run_regression() -> void:
 	Campaign.handler_agreement = ""
 	Campaign.archive_intel_cost = 0
 	Campaign.rook_contract_accepted = false
+	Campaign.rook_trust_penalty_enabled = false
 	Campaign.equipment_owned.clear()
 	Campaign.load_campaign()
 	check(Campaign.handler_agreement == "coordinate", "agreement survives reload")
-	check(Campaign.rook_contract_accepted and Campaign.rook_contract_reward() == 0, "closed contract survives reload")
+	check(Campaign.rook_contract_accepted and Campaign.rook_trust_penalty_enabled and Campaign.rook_contract_reward() == 0, "closed contract and terms survive reload")
 	check(Campaign.rook_reputation() == 1 and Campaign.rook_relationship() == "Known client", "Rook relationship survives reload")
 	check(Campaign.earned_credits() == 280 and Campaign.available_credits() == 25 and Campaign.owns_equipment("quiet_kit") and Campaign.owns_archive_intel() and Campaign.owns_equipment("light_armor") and Campaign.owns_equipment("utility_rig"), "equipment, recon and balance survive reload")
 	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")
@@ -214,6 +215,7 @@ func run_regression() -> void:
 		check(GameSettings.save_effects_volume(1.5) and is_equal_approx(GameSettings.effects_volume, 1.0), "volume clamped")
 	safehouse.queue_free()
 	await get_tree().process_frame
+	check_contract_branches()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures == 0:
 		print("CAMPAIGN REGRESSION PASSED")
@@ -253,3 +255,43 @@ func check_archive_route(choice: String, expected: Vector3) -> void:
 		check(bool(mission.call("can_reach", mission.get("intel_point"))), choice + " ledger reachable")
 	archive.queue_free()
 	await get_tree().process_frame
+
+func check_contract_branches() -> void:
+	# Standalone campaign instances use the already isolated test save.
+	var original := ConfigFile.new()
+	if original.load("user://campaign.cfg") != OK:
+		check(false, "capture isolated save before alternate branches")
+		return
+	var clean := {"seconds": 50, "damage": 0, "shots": 0, "hits": 0, "alerted": false, "guard_down": false}
+	var official := preload("res://scripts/campaign.gd").new()
+	check(official.record_intel("retain", clean), "alternate hotel completion")
+	check(official.accept_handler_contract(), "accept official first")
+	check(not official.accept_rook_contract(), "official excludes Rook")
+	check(official.record_archive(clean), "official archive completion")
+	check(official.handler_contract_reward() == 30 and official.earned_credits() == 390 and official.handler_trust() == 0, "official reward and trust settle once")
+	check(official.record_archive(clean) and official.earned_credits() == 390, "official replay cannot farm reward")
+	var reloaded := preload("res://scripts/campaign.gd").new()
+	reloaded.load_campaign()
+	check(reloaded.handler_contract_accepted and reloaded.earned_credits() == 390 and not reloaded.save_blocked, "official settlement survives reload")
+	var rook := preload("res://scripts/campaign.gd").new()
+	check(rook.record_intel("retain", clean) and rook.accept_rook_contract(), "new Rook terms accepted")
+	check(rook.record_archive(clean), "Rook archive completion")
+	check(rook.earned_credits() == 395 and rook.handler_trust() == -2 and rook.rook_reputation() == 1, "Rook reward and trust cost settle")
+	var legacy := ConfigFile.new()
+	check(legacy.load("user://campaign.cfg") == OK, "load Rook save")
+	legacy.erase_section_key("contacts", "rook_trust_penalty_enabled")
+	check(legacy.save("user://campaign.cfg") == OK, "simulate pre-penalty save")
+	var old_terms := preload("res://scripts/campaign.gd").new()
+	old_terms.load_campaign()
+	check(not old_terms.save_blocked and old_terms.earned_credits() == 395 and old_terms.handler_trust() == -1, "legacy Rook contract retains old terms")
+	legacy.set_value("contacts", "handler_contract_accepted", true)
+	check(legacy.save("user://campaign.cfg") == OK, "simulate conflicting contracts")
+	var invalid := preload("res://scripts/campaign.gd").new()
+	invalid.load_campaign()
+	check(invalid.save_blocked, "dual accepted contracts rejected")
+	check(original.save("user://campaign.cfg") == OK, "restore original isolated save")
+	official.free()
+	reloaded.free()
+	rook.free()
+	old_terms.free()
+	invalid.free()

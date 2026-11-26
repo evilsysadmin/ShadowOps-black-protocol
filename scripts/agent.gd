@@ -16,6 +16,7 @@ var field_mode := true
 const EventAudio = preload("res://scripts/event_audio.gd")
 var event_audio: EventAudio
 var combat: Node
+var pause_menu: CanvasLayer
 var aiming := false
 var boom: SpringArm3D
 var body_collider: CollisionShape3D
@@ -84,9 +85,9 @@ func _ready() -> void:
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
-	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · C cover · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc release"
+	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · C cover · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc pause"
 	if not field_mode:
-		label.text = "BLACK PROTOCOL | SAFEHOUSE\nWASD · Mouse · E interact · Esc release"
+		label.text = "BLACK PROTOCOL | SAFEHOUSE\nWASD · Mouse · E interact · Esc pause"
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(label)
 	health_label = Label.new()
@@ -110,6 +111,9 @@ func _ready() -> void:
 	damage_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(damage_overlay)
 	damage_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_menu = CanvasLayer.new()
+	pause_menu.set_script(preload("res://scripts/pause_menu.gd"))
+	add_child(pause_menu)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func build_model() -> void:
@@ -121,9 +125,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not controls_enabled:
 		return
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_ESCAPE:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		elif field_mode and event.physical_keycode == KEY_R and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		if field_mode and event.physical_keycode == KEY_R and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			combat.request_reload()
 		elif field_mode and event.physical_keycode == KEY_C and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 			cover_requested = true

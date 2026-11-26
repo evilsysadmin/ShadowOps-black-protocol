@@ -91,7 +91,9 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Night Relay unlocks after Silent Archive. A fulfilled official contract grants west entry; fulfilled Rook contract grants east entry; otherwise the south entry is used. Recover the relay drive and extract at the original entry. The third operation has distinct procedural geometry, a patrol and cover, canonical field report and one-time performance rewards. Local smoke includes the scene; regressions cover all route outcomes, independent entry reachability, persistence and replay protection.
 
-- Field equipment uses one optional deployment slot, independent of the standard/protection/supplies kit and specialization. Only the selected owned item grants its bonus. Existing purchases remain intact; the briefing defaults to a previously selected owned item or the first owned item. No additional cost for swapping.
+- Field equipment uses one optional deployment slot, independent of the standard/protection/supplies kit and specialization. Only the selected owned item grants its bonus. Existing purchases remain intact; the briefing defaults to the previous session selection, initially none. No additional cost for swapping.
+
+- Procedural character rigs now include a stylized held prop, short visual shot pulse and reload pose driven by actual combat events. These are presentation-only: no change to hit resolution, damage or reload timing. The impact marker is owned by the combat node, and the synthesized audio envelope uses typed arithmetic. Local regression checks marker ownership and animation state transitions.
 
 ## Development policy
 

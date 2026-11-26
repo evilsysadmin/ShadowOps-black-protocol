@@ -64,7 +64,7 @@ func _ready() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.albedo_color = Color(1.0, 0.76, 0.36)
 	impact_mark.material_override = mat
-	agent.add_child(impact_mark)
+	add_child(impact_mark)
 	impact_mark.top_level = true
 	impact_mark.hide()
 

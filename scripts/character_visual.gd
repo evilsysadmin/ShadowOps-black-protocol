@@ -10,6 +10,9 @@ var phase := 0.0
 var stride := 0.0
 var stance := 0.0
 var aim_blend := 0.0
+var shot_pose := 0.0
+var reload_pose := 0.0
+var held_prop: Node3D
 
 func build(uniform: Color, trousers: Color, security := false) -> void:
 	var cloth := make_material(uniform)
@@ -51,12 +54,23 @@ func build(uniform: Color, trousers: Color, security := false) -> void:
 		ellipsoid(elbow, Vector3(0, -0.115, 0), Vector3(0.15, 0.27, 0.17), cloth)
 		cuboid(elbow, Vector3(0, -0.235, 0), Vector3(0.14, 0.045, 0.16), shirt)
 		ellipsoid(elbow, Vector3(0, -0.30, 0), Vector3(0.12, 0.16, 0.12), skin)
+	# Stylized presentation-only prop, attached to the hand rig.
+	held_prop = joint(elbows[1], Vector3(0, -0.33, -0.035))
+	cuboid(held_prop, Vector3(0, -0.075, 0), Vector3(0.065, 0.22, 0.10), trim)
+	cuboid(held_prop, Vector3(0, 0.015, 0.025), Vector3(0.065, 0.10, 0.09), leather)
+	held_prop.hide()
 
-func animate_pose(delta: float, speed: float, crouched: bool, aiming: bool) -> void:
+func trigger_shot() -> void:
+	shot_pose = 1.0
+
+func animate_pose(delta: float, speed: float, crouched: bool, aiming: bool, reloading := false) -> void:
 	var blend := 1.0 - exp(-12.0 * delta)
 	stride = lerpf(stride, clampf(speed / 3.6, 0.0, 1.25), blend)
 	stance = lerpf(stance, 1.0 if crouched else 0.0, blend)
-	aim_blend = lerpf(aim_blend, 1.0 if aiming else 0.0, blend)
+	aim_blend = lerpf(aim_blend, 1.0 if aiming and not reloading else 0.0, blend)
+	shot_pose = move_toward(shot_pose, 0.0, delta * 7.0)
+	reload_pose = lerpf(reload_pose, 1.0 if reloading else 0.0, blend)
+	held_prop.visible = aim_blend > 0.15 or reload_pose > 0.15 or shot_pose > 0.0
 	phase = fmod(phase + delta * speed * 2.1, TAU)
 	hips.position.y = lerpf(0.89, 0.49, stance) + absf(sin(phase)) * stride * 0.02
 	torso.rotation.x = lerpf(0.0, -0.72, stance)
@@ -67,6 +81,8 @@ func animate_pose(delta: float, speed: float, crouched: bool, aiming: bool) -> v
 		knees[i].rotation.x = lerpf(0.0, -1.9, stance) - maxf(0.0, sin(cycle)) * stride * 0.5
 		shoulders[i].rotation.x = lerpf(-swing * 0.32, 0.95, aim_blend)
 		elbows[i].rotation.x = lerpf(0.12 + maxf(0.0, -swing) * 0.32, 0.62, aim_blend)
+		shoulders[i].rotation.x += shot_pose * 0.12 + reload_pose * 0.40
+		elbows[i].rotation.x += shot_pose * 0.10 + reload_pose * (0.70 if i == 0 else 0.95)
 
 func joint(parent: Node3D, at: Vector3) -> Node3D:
 	var node := Node3D.new()

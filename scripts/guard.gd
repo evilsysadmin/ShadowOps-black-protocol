@@ -63,6 +63,7 @@ func _physics_process(delta: float) -> void:
 				state = GuardState.ALERT
 				attack_timer = ATTACK_INTERVAL
 		if state == GuardState.ALERT and attack_timer <= 0.0:
+			body.trigger_shot()
 			player.call("receive_damage", ATTACK_DAMAGE)
 			attack_timer = ATTACK_INTERVAL
 	elif state == GuardState.ALERT:

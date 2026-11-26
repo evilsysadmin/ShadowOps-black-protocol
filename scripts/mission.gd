@@ -1,6 +1,6 @@
 extends Node3D
 
-enum Stage { RECOVER, EXTRACT, COMPLETE }
+enum Stage { RECOVER, EXTRACT, COMPLETE, FAILED }
 
 const INTEL_POINT := Vector3(-3.65, 1.38, -3.92)
 const EXIT_POINT := Vector3(0, 0.65, 9)
@@ -67,13 +67,13 @@ func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node
 func _unhandled_input(event: InputEvent) -> void:
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
-	if event.physical_keycode == KEY_R and stage == Stage.COMPLETE:
+	if event.physical_keycode == KEY_R and (stage == Stage.COMPLETE or stage == Stage.FAILED):
 		get_tree().reload_current_scene()
 	elif event.physical_keycode == KEY_E and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		interact_requested = true
 
 func _physics_process(_delta: float) -> void:
-	if stage == Stage.COMPLETE:
+	if stage == Stage.COMPLETE or stage == Stage.FAILED:
 		interact_requested = false
 		return
 	var target := INTEL_POINT if stage == Stage.RECOVER else EXIT_POINT
@@ -96,6 +96,17 @@ func _physics_process(_delta: float) -> void:
 			prompt.text = ""
 	interact_requested = false
 
+func guard_detected() -> void:
+	if stage == Stage.COMPLETE or stage == Stage.FAILED:
+		return
+	stage = Stage.FAILED
+	interact_requested = false
+	player.set("controls_enabled", false)
+	intel.hide()
+	exit.hide()
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	refresh_objective()
+
 func can_reach(target: Vector3) -> bool:
 	var origin := player.global_position + Vector3(0, 1.2, 0)
 	if origin.distance_to(target) > REACH:
@@ -113,3 +124,6 @@ func refresh_objective() -> void:
 		Stage.COMPLETE:
 			objective.text = "OPERATION COMPLETE | Intel recovered and agent extracted"
 			prompt.text = "Mission complete — press R to replay"
+		Stage.FAILED:
+			objective.text = "OPERATION FAILED | Agent detected"
+			prompt.text = "Compromised — press R to retry"

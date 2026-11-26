@@ -18,6 +18,9 @@ var attack_timer := 0.0
 var search_remaining := 0.0
 var ever_alerted := false
 var search_from_alert := false
+var last_seen_position := Vector3.ZERO
+var has_last_seen := false
+var search_moving := false
 const SEARCH_DURATION := 4.0
 const ATTACK_INTERVAL := 1.35
 const ATTACK_DAMAGE := 15
@@ -52,6 +55,7 @@ func _physics_process(delta: float) -> void:
 	attack_timer = maxf(0.0, attack_timer - delta)
 	var visible := sees_player()
 	if visible:
+		remember_sighting(player.global_position)
 		velocity.x = 0.0
 		velocity.z = 0.0
 		face_player()
@@ -63,14 +67,7 @@ func _physics_process(delta: float) -> void:
 	elif state == GuardState.ALERT:
 		begin_search(true)
 	elif state == GuardState.SEARCH:
-		search_remaining -= delta
-		facing = facing.rotated(Vector3.UP, delta * 1.4)
-		velocity.x = 0.0
-		velocity.z = 0.0
-		if search_remaining <= 0.0:
-			state = GuardState.PATROL
-			suspicion = 0.0
-			search_from_alert = false
+		advance_search(delta, global_position)
 	else:
 		suspicion = maxf(0.0, suspicion - delta * 0.3)
 		state = GuardState.SUSPICIOUS if suspicion > 0.0 else GuardState.PATROL
@@ -114,8 +111,38 @@ func begin_search(from_alert: bool) -> void:
 	state = GuardState.SEARCH
 	search_from_alert = from_alert
 	search_remaining = SEARCH_DURATION
+	search_moving = from_alert and has_last_seen
 	velocity.x = 0.0
 	velocity.z = 0.0
+
+func remember_sighting(at: Vector3) -> void:
+	last_seen_position = at
+	has_last_seen = true
+
+# Uses only the last visible position, never the hidden player's current position.
+func advance_search(delta: float, at: Vector3) -> void:
+	search_remaining = maxf(0.0, search_remaining - delta)
+	if search_remaining <= 0.0:
+		state = GuardState.PATROL
+		suspicion = 0.0
+		search_from_alert = false
+		search_moving = false
+		has_last_seen = false
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	if search_moving:
+		var offset := last_seen_position - at
+		offset.y = 0.0
+		if offset.length() > 0.45 and search_remaining > 1.5:
+			facing = offset.normalized()
+			velocity.x = facing.x * SPEED
+			velocity.z = facing.z * SPEED
+			return
+		search_moving = false
+	velocity.x = 0.0
+	velocity.z = 0.0
+	facing = facing.rotated(Vector3.UP, delta * 1.4)
 
 func face_player() -> void:
 	var direction := player.global_position - global_position
@@ -186,7 +213,7 @@ func update_status() -> void:
 		status.text = "ALERT"
 		status.modulate = Color(1.0, 0.26, 0.20)
 	elif state == GuardState.SEARCH:
-		status.text = "SEARCHING" if search_from_alert else "INVESTIGATING"
+		status.text = ("CHECKING LAST SIGHTING" if search_moving else "SEARCHING") if search_from_alert else "INVESTIGATING"
 		status.modulate = Color(1.0, 0.78, 0.28)
 	elif suspicion > 0.0:
 		status.text = "SUSPICION %d%%" % int(suspicion * 100.0)

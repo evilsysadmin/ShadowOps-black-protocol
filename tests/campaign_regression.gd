@@ -186,6 +186,14 @@ func run_regression() -> void:
 		probe.begin_search(true)
 		probe.update_detection(0.01, true)
 		check(probe.state == guard_script.GuardState.ALERT, "alerted search reacquires")
+		probe.remember_sighting(Vector3(2, 0, 0))
+		probe.begin_search(true)
+		probe.advance_search(0.1, Vector3.ZERO)
+		check(probe.search_moving and probe.velocity.x > 0.0, "search uses stored sighting")
+		probe.advance_search(0.1, Vector3(2, 0, 0))
+		check(not probe.search_moving and is_zero_approx(probe.velocity.x), "search scans after arrival")
+		probe.advance_search(5.0, Vector3(2, 0, 0))
+		check(probe.state == guard_script.GuardState.PATROL and not probe.has_last_seen and probe.ever_alerted, "search expires without clearing alert history")
 		probe.free()
 	if is_instance_valid(agent):
 		var field_agent := agent as CharacterBody3D

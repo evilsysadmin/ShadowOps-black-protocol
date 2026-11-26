@@ -99,6 +99,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - F activates a fictional one-use distraction gadget during field operations. A patrolling or suspicious guard enters the existing temporary investigation state; visual detection still applies. An alerted, down or already investigating guard rejects the request without consuming the charge. The gadget cannot clear recorded alerts or affect the safehouse. Local regressions cover charge use, rejected states and alert history.
 
+- After confirmed visual contact, guards remember the last observed position and make a bounded search toward it before scanning in place. The search never reads the hidden agent's current location, ends after the existing four-second budget, and retains historical alert status. Direct movement remains collision-limited; no navmesh or obstacle pathfinding yet. Local regression covers stored position, arrival and timeout.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

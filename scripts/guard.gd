@@ -1,6 +1,6 @@
 extends CharacterBody3D
 
-const PATROL := [Vector3(0.8, 0.0, -6.0), Vector3(0.8, 0.0, 2.0)]
+var patrol_points: Array[Vector3] = [Vector3(0.8, 0.0, -6.0), Vector3(0.8, 0.0, 2.0)]
 const SPEED := 1.45
 var player: CharacterBody3D
 var mission: Node
@@ -106,11 +106,15 @@ func patrol(delta: float) -> void:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		return
-	var target: Vector3 = PATROL[waypoint]
+	if patrol_points.size() < 2:
+		velocity.x = 0.0
+		velocity.z = 0.0
+		return
+	var target: Vector3 = patrol_points[waypoint % patrol_points.size()]
 	var offset := target - global_position
 	offset.y = 0.0
 	if offset.length() < 0.15:
-		waypoint = (waypoint + 1) % PATROL.size()
+		waypoint = (waypoint + 1) % patrol_points.size()
 		pause_time = 0.8
 		velocity.x = 0.0
 		velocity.z = 0.0

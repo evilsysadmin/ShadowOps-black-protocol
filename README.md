@@ -61,7 +61,7 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 ## Operation catalog
 
-The first operation is now described through a shared catalog. Silent Archive unlocks after the canonical hotel debrief. Select it at the briefing terminal; recover the ledger and return to extraction. Sharing the hotel file opens a closer starting position; retaining it starts at the far entrance. Archive completion persists independently of the first decision and specialization. Both operations remain replayable. The archive environment is procedural and provisional.
+The first operation is now described through a shared catalog. Silent Archive unlocks after the canonical hotel debrief. Select it at the briefing terminal; recover the ledger and return to extraction. Sharing the hotel file opens a closer starting position; retaining it starts at the far entrance. Archive completion persists independently of the first decision and specialization. Both operations remain replayable. The archive environment is procedural and provisional. It has its own patrol route and access/records signage. Isolated regressions instantiate both narrative branches and check spawn, extraction and ledger reachability.
 
 ## Development policy
 

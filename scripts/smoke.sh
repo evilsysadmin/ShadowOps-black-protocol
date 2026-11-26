@@ -12,8 +12,15 @@ if [[ "$version" != 4.* ]]; then
   echo "Expected Godot 4, found $version" >&2
   exit 2
 fi
-log="$(mktemp)"
-trap 'rm -f "$log"' EXIT
+# Linux local gate: never read or write the player's actual campaign.
+scratch="$(mktemp -d)"
+trap 'rm -rf -- "$scratch"' EXIT
+export XDG_DATA_HOME="$scratch/data"
+export XDG_CONFIG_HOME="$scratch/config"
+export XDG_CACHE_HOME="$scratch/cache"
+export BLACK_PROTOCOL_SMOKE_ROOT="$scratch"
+mkdir -p "$XDG_DATA_HOME" "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME"
+log="$scratch/godot.log"
 run_checked() {
   : > "$log"
   if ! "$engine" "$@" 2>&1 | tee "$log"; then
@@ -29,4 +36,9 @@ run_checked --headless --path . --editor --import
 run_checked --headless --path . --quit-after 120
 run_checked --headless --path . res://scenes/briefing.tscn --quit-after 120
 run_checked --headless --path . res://scenes/hotel.tscn --quit-after 120
-echo "Local Godot import and startup smoke passed."
+run_checked --headless --path . res://tests/campaign_regression.tscn --quit-after 300
+if ! grep -Fxq "CAMPAIGN REGRESSION PASSED" "$log"; then
+  echo "Campaign regression did not finish successfully." >&2
+  exit 1
+fi
+echo "Local Godot import, startup and campaign regression passed."

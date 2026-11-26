@@ -39,7 +39,7 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Check temporary impact marker, hit-confirmation reticle and red damage flash. These are provisional visual effects and must not intercept input.
 
-- After extraction, choose 1 (share intel with handler) or 2 (retain for leverage). Check distinct trust/leverage outcomes and that the decision is applied once. Replay resets these prototype mission-local values; campaign persistence is not implemented yet.
+- After extraction, choose 1 (share intel with handler) or 2 (retain for leverage). Check distinct trust/leverage outcomes and that the decision is applied once. The first successful debrief records the canonical choice in `user://campaign.cfg` (Godot local app data). Replays never change the first choice or accumulate reputation. Restart Godot to verify persistence. Invalid or unsupported saves are left untouched; failed saves are shown in the debrief.
 
 ## Development policy
 

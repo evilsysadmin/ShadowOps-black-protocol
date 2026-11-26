@@ -18,6 +18,8 @@ Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, C toggle low cover, Q 
 
 ## Local startup gate
 
+`bash scripts/static-check.sh` runs a narrow syntax sanity check without Godot. The smoke runner invokes it before importing the project. It is not a GDScript parser.
+
 Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing and hotel, failing even on logged script errors with a zero engine exit code. It also runs a campaign/equipment regression scene, with temporary Linux XDG directories so your real campaign is not touched. The test verifies canonical decisions, skill-point limits, persistence, kit isolation, and actual initial agent/combat stats in the hotel and safehouse. It does not replace interactive playtesting.
 
 ## Local smoke checklist

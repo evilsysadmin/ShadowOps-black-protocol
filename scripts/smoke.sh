@@ -2,6 +2,7 @@
 # Local-only startup gate; never launches a graphical window.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+bash scripts/static-check.sh
 engine="${GODOT_BIN:-godot}"
 if ! command -v "$engine" >/dev/null 2>&1; then
   echo "Godot 4 not found; set GODOT_BIN to its executable." >&2

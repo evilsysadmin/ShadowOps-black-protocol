@@ -6,6 +6,9 @@ var transitioning := false
 var error_label: Label
 var kit_selection: OptionButton
 var kit_description: Label
+var agent_status: Label
+var specialization_row: HBoxContainer
+var specialization_selection: OptionButton
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -26,9 +29,11 @@ func _ready() -> void:
 	add_line(panel, "Recover the intelligence file at hotel reception and return to extraction. Avoid unnecessary confrontation. A security patrol may compromise the operation.", 20, Color(0.85, 0.89, 0.89))
 	if not Campaign.intel_choice.is_empty():
 		add_line(panel, "REPLAY — Your original campaign decision will be preserved.", 17, Color(0.75, 0.64, 0.43))
-	var skill := Campaign.specialization.capitalize() if not Campaign.specialization.is_empty() else "Unassigned"
-	add_line(panel, "AGENT STATUS\nTrust: %+d    Leverage: %+d    Specialization: %s" % [Campaign.handler_trust(), Campaign.independent_leverage(), skill], 18, Color(0.66, 0.83, 0.80))
-	add_line(panel, "FIELD CONTROLS\nWASD move · Ctrl crouch · Shift sprint · E interact\nRMB aim · LMB fire · R reload", 17, Color(0.68, 0.73, 0.76))
+	agent_status = add_line(panel, "", 18, Color(0.66, 0.83, 0.80))
+	refresh_agent_status()
+	if Campaign.has_skill_point():
+		build_specialization_row(panel)
+	add_line(panel, "FIELD CONTROLS\nWASD move · Ctrl crouch · C cover · Shift sprint · E interact\nRMB aim · LMB fire · R reload", 17, Color(0.68, 0.73, 0.76))
 	add_line(panel, "DEPLOYMENT KIT", 16, Color(0.75, 0.64, 0.43))
 	kit_selection = OptionButton.new()
 	kit_selection.add_item("Standard")
@@ -57,6 +62,41 @@ func _ready() -> void:
 	actions.add_child(deploy)
 	error_label = add_line(panel, "", 16, Color(1.0, 0.4, 0.35))
 	deploy.grab_focus()
+
+func refresh_agent_status() -> void:
+	var skill := Campaign.specialization.capitalize() if not Campaign.specialization.is_empty() else "Unassigned"
+	agent_status.text = "AGENT STATUS\nTrust: %+d    Leverage: %+d    Specialization: %s" % [Campaign.handler_trust(), Campaign.independent_leverage(), skill]
+	if Campaign.has_skill_point():
+		agent_status.text += " · 1 unspent point"
+
+func build_specialization_row(panel: VBoxContainer) -> void:
+	specialization_row = HBoxContainer.new()
+	specialization_row.add_theme_constant_override("separation", 8)
+	panel.add_child(specialization_row)
+	specialization_selection = OptionButton.new()
+	specialization_selection.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	specialization_selection.add_item("Resilience (+20 health)")
+	specialization_selection.add_item("Infiltration (faster crouch)")
+	specialization_selection.add_item("Mobility (faster sprint)")
+	specialization_selection.select(0)
+	specialization_row.add_child(specialization_selection)
+	var apply_button := Button.new()
+	apply_button.text = "Confirm permanent choice"
+	apply_button.pressed.connect(_choose_specialization)
+	specialization_row.add_child(apply_button)
+
+func _choose_specialization() -> void:
+	if transitioning or not Campaign.has_skill_point():
+		return
+	var index := specialization_selection.selected
+	if index < 0 or index >= Campaign.SPECIALIZATIONS.size():
+		return
+	if not Campaign.choose_specialization(Campaign.SPECIALIZATIONS[index]):
+		error_label.text = "Unable to save specialization. Try again."
+		return
+	error_label.text = ""
+	specialization_row.hide()
+	refresh_agent_status()
 
 func update_kit_description(index: int) -> void:
 	match index:

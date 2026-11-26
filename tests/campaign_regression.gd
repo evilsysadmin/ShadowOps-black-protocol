@@ -31,6 +31,7 @@ func run_regression() -> void:
 	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
 	check(Campaign.available_credits() == 0, "fresh campaign has no credits")
+	check(not Campaign.buy_archive_intel(), "recon locked before completion")
 	check(not Campaign.negotiate_handler("coordinate"), "negotiation locked before first operation")
 	check(not Campaign.select_operation("silent_archive"), "archive locked initially")
 	check(not Campaign.record_archive(), "archive cannot complete before hotel")
@@ -51,6 +52,7 @@ func run_regression() -> void:
 	check(Campaign.record_intel("retain", hotel_report), "record first mission")
 	check(Campaign.field_report("unexpected_guest") == hotel_report, "hotel performance stored")
 	check(Campaign.available_credits() == 180, "clean operation reward")
+	check(Campaign.archive_intel_price() == 60, "standard recon price")
 	check(handler.assessment(hotel_report).contains("No shots, no damage"), "grounded clean assessment")
 	check(operations.report_summary(true, hotel_report).contains("— accuracy"), "zero shots has no accuracy")
 	hotel_report["seconds"] = 999
@@ -68,6 +70,10 @@ func run_regression() -> void:
 	check(not Campaign.negotiate_handler("invalid"), "invalid agreement rejected")
 	check(Campaign.negotiate_handler("coordinate"), "agreement saved")
 	check(Campaign.handler_trust() == 0 and Campaign.independent_leverage() == 1, "agreement changes trust")
+	check(Campaign.archive_intel_price() == 40, "coordination discount")
+	check(Campaign.buy_archive_intel(), "purchase recon")
+	check(Campaign.owns_archive_intel() and Campaign.available_credits() == 240, "debit once")
+	check(not Campaign.buy_archive_intel(), "duplicate recon purchase rejected")
 	check(not Campaign.negotiate_handler("autonomy"), "agreement cannot be farmed or changed")
 	check(Campaign.intel_choice == "retain", "negotiation preserves route decision")
 	check(Campaign.has_skill_point(), "mission awards one skill point")
@@ -87,9 +93,10 @@ func run_regression() -> void:
 	Campaign.archive_completed = false
 	Campaign.field_reports.clear()
 	Campaign.handler_agreement = ""
+	Campaign.archive_intel_cost = 0
 	Campaign.load_campaign()
 	check(Campaign.handler_agreement == "coordinate", "agreement survives reload")
-	check(Campaign.available_credits() == 280, "earned credits survive reload")
+	check(Campaign.earned_credits() == 280 and Campaign.available_credits() == 240 and Campaign.owns_archive_intel(), "recon and credit balance survive reload")
 	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")
 	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")

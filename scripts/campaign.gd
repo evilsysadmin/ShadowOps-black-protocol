@@ -8,6 +8,8 @@ var intel_choice := ""
 var archive_completed := false
 var handler_agreement := ""
 var archive_intel_cost := 0
+var equipment_owned: Array[String] = []
+const EQUIPMENT_COSTS := {"light_armor": 80, "utility_rig": 70}
 const INTEL_STANDARD_COST := 60
 const INTEL_COORDINATED_COST := 40
 const HANDLER_AGREEMENTS := ["coordinate", "autonomy"]
@@ -54,6 +56,23 @@ func load_campaign() -> void:
 	if not paid is int or not paid in [0, INTEL_STANDARD_COST, INTEL_COORDINATED_COST] or (paid != 0 and saved == "") or (paid == INTEL_COORDINATED_COST and agreement != "coordinate"):
 		save_blocked = true
 		return
+	var owned: Variant = config.get_value("economy", "equipment_owned", [])
+	if not owned is Array:
+		save_blocked = true
+		return
+	var validated: Array[String] = []
+	var spent := int(paid)
+	for item in owned:
+		if not item is String or not EQUIPMENT_COSTS.has(item) or validated.has(item):
+			save_blocked = true
+			return
+		validated.append(item)
+		spent += int(EQUIPMENT_COSTS[item])
+	var earnings := reward_for_completion(saved != "", reports.get(MISSION_ID, {})) + reward_for_completion(archive, reports.get("silent_archive", {}))
+	if spent > earnings:
+		save_blocked = true
+		return
+	equipment_owned = validated
 	archive_intel_cost = paid
 	handler_agreement = agreement
 	field_reports = reports.duplicate(true)
@@ -79,8 +98,11 @@ func choose_specialization(value: String) -> bool:
 		return false
 	return write_campaign(intel_choice, value, archive_completed, field_reports, handler_agreement)
 
-func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary, agreement: String, intel_cost: int = -1) -> bool:
+func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary, agreement: String, intel_cost: int = -1, new_equipment: Variant = null) -> bool:
 	var paid := archive_intel_cost if intel_cost == -1 else intel_cost
+	var owned: Array[String] = equipment_owned.duplicate()
+	if new_equipment != null:
+		owned.assign(new_equipment)
 	var config := ConfigFile.new()
 	config.set_value("meta", "schema", SCHEMA)
 	config.set_value("missions", MISSION_ID, choice)
@@ -89,6 +111,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	config.set_value("progression", "specialization", skill)
 	config.set_value("contacts", "handler_agreement", agreement)
 	config.set_value("economy", "archive_intel_cost", paid)
+	config.set_value("economy", "equipment_owned", owned)
 	if config.save(TEMP_PATH) != OK:
 		return false
 	if DirAccess.rename_absolute(ProjectSettings.globalize_path(TEMP_PATH), ProjectSettings.globalize_path(SAVE_PATH)) != OK:
@@ -96,6 +119,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	intel_choice = choice
 	specialization = skill
 	archive_completed = completed_archive
+	equipment_owned = owned
 	archive_intel_cost = paid
 	handler_agreement = agreement
 	field_reports = reports.duplicate(true)
@@ -185,9 +209,11 @@ func operation_reward(operation: String) -> int:
 			completed = not intel_choice.is_empty()
 		Operations.ARCHIVE:
 			completed = archive_completed
+	return reward_for_completion(completed, field_report(operation))
+
+func reward_for_completion(completed: bool, report: Dictionary) -> int:
 	if not completed:
 		return 0
-	var report := field_report(operation)
 	var reward := 100
 	if not report.is_empty():
 		if not bool(report["alerted"]):
@@ -202,7 +228,10 @@ func earned_credits() -> int:
 	return operation_reward(Operations.HOTEL) + operation_reward(Operations.ARCHIVE)
 
 func available_credits() -> int:
-	return earned_credits() - archive_intel_cost
+	var spent := archive_intel_cost
+	for item in equipment_owned:
+		spent += int(EQUIPMENT_COSTS[item])
+	return earned_credits() - spent
 
 func archive_intel_price() -> int:
 	return INTEL_COORDINATED_COST if handler_agreement == "coordinate" else INTEL_STANDARD_COST
@@ -215,3 +244,15 @@ func buy_archive_intel() -> bool:
 	if save_blocked or intel_choice.is_empty() or owns_archive_intel() or available_credits() < price:
 		return false
 	return write_campaign(intel_choice, specialization, archive_completed, field_reports, handler_agreement, price)
+
+func owns_equipment(item: String) -> bool:
+	return equipment_owned.has(item)
+
+func buy_equipment(item: String) -> bool:
+	if save_blocked or intel_choice.is_empty() or not EQUIPMENT_COSTS.has(item) or owns_equipment(item):
+		return false
+	if available_credits() < int(EQUIPMENT_COSTS[item]):
+		return false
+	var next_owned: Array[String] = equipment_owned.duplicate()
+	next_owned.append(item)
+	return write_campaign(intel_choice, specialization, archive_completed, field_reports, handler_agreement, -1, next_owned)

@@ -46,7 +46,7 @@ func _ready() -> void:
 	panel.add_child(contract_button)
 	contract_confirmation = ConfirmationDialog.new()
 	contract_confirmation.title = "Rook / Silent Archive"
-	contract_confirmation.dialog_text = "Accept the one-time contract? Avoid full alert on the first successful archive completion to earn 35 credits and reputation. Replays cannot change the outcome."
+	contract_confirmation.dialog_text = "Accept the one-time contract? Avoid full alert on the first successful archive completion to earn 35 credits and +1 Rook reputation, at the cost of -1 handler trust. This permanently excludes the official contract. Replays cannot change the outcome."
 	contract_confirmation.confirmed.connect(accept_contract)
 	add_child(contract_confirmation)
 	status = line("", 17)

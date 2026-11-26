@@ -32,6 +32,10 @@ func run_regression() -> void:
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
 	check(Campaign.available_credits() == 0, "fresh campaign has no credits")
 	check(not Campaign.accept_rook_contract(), "fresh campaign cannot accept contract")
+	check(not Campaign.accept_handler_contract(), "fresh campaign cannot accept official contract")
+	check(Campaign.handler_reward_for(true, true, {"damage": 0}) == 30, "official reward for no damage")
+	check(Campaign.handler_reward_for(true, true, {"damage": 1}) == 0, "official reward requires no damage")
+	check(Campaign.handler_reward_for(false, true, {"damage": 0}) == 0, "no retroactive official reward")
 	check(Campaign.contract_reward_for(true, true, {"alerted": false}) == 35, "clean accepted completion reward")
 	check(Campaign.contract_reward_for(false, true, {"alerted": false}) == 0, "no retroactive contract reward")
 	check(Campaign.contract_reward_for(true, true, {}) == 0, "missing metrics cannot earn contract")
@@ -69,7 +73,9 @@ func run_regression() -> void:
 	hotel_report["seconds"] = 999
 	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "report isolated from caller mutation")
 	check(Campaign.select_operation("silent_archive"), "archive unlocked by hotel")
+	check(Campaign.can_accept_handler_contract(), "official offer available")
 	check(Campaign.accept_rook_contract(), "accept Rook contract before archive")
+	check(not Campaign.accept_handler_contract(), "Rook excludes official contract")
 	check(not Campaign.accept_rook_contract() and Campaign.rook_contract_reward() == 0, "contract cannot repeat or prepay")
 	var archive_report := {"seconds": 80, "damage": 15, "shots": 4, "hits": 3, "alerted": true, "guard_down": true}
 	check(Campaign.record_archive(archive_report), "archive completion recorded")

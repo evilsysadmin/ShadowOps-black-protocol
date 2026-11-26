@@ -108,6 +108,8 @@ func update_operation(index: int) -> void:
 	if operation == Operations.ARCHIVE:
 		if Campaign.rook_contract_accepted:
 			operation_status.text += "\nRook: " + Campaign.rook_contract_status()
+		elif Campaign.handler_contract_accepted:
+			operation_status.text += "\nHandler: " + Campaign.handler_contract_status()
 		if Campaign.owns_archive_intel():
 			operation_description.text += "\nRecon: records at the far end, guard patrols the central aisle."
 			intel_button.text = "Recon acquired from %s · %d credits remaining" % [Campaign.archive_intel_source(), Campaign.available_credits()]

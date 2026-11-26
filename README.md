@@ -87,6 +87,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Rook offers an optional one-time Silent Archive contract via the armory before the first completion. Accept explicitly, then complete the operation without full alert to earn 35 additional credits and one Rook reputation point. The canonical report settles the result; failures before successful extraction can be retried, but replays after completion cannot change it. Legacy completions cannot retroactively accept it. The briefing shows an accepted contract.
 
+- The handler offers an exclusive alternative to Rook before the first Silent Archive completion: no damage for 30 credits and +1 trust. Accepting either contract blocks the other permanently. A successful Rook contract also costs one handler trust point, disclosed at acceptance. Both settle from canonical reports; old saves retain existing acceptance. No retroactive reward.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

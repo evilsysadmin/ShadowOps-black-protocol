@@ -20,7 +20,7 @@ Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, C toggle low cover, Q 
 
 `bash scripts/static-check.sh` runs a narrow syntax sanity check without Godot. The smoke runner invokes it before importing the project. It is not a GDScript parser.
 
-Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing, hotel and archive, failing even on logged script errors with a zero engine exit code. It also runs a campaign/equipment regression scene, with temporary Linux XDG directories so your real campaign is not touched. The test verifies canonical decisions, skill-point limits, persistence, kit isolation, and actual initial agent/combat stats in the hotel and safehouse, plus entering, toggling and leaving physical cover. It does not replace interactive playtesting.
+Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing, dossier, hotel and archive, failing even on logged script errors with a zero engine exit code. It also runs a campaign/equipment regression scene, with temporary Linux XDG directories so your real campaign is not touched. The test verifies canonical decisions, skill-point limits, persistence, kit isolation, and actual initial agent/combat stats in the hotel and safehouse, plus entering, toggling and leaving physical cover. It does not replace interactive playtesting.
 
 ## Local smoke checklist
 
@@ -68,6 +68,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 - Effects volume can be set from the briefing and saved explicitly (0% mutes new cues). Preferences use `user://settings.cfg`, separate from campaign progress. Failed writes are reported and leave the previous setting active.
 
 - Esc opens a real pause overlay in the safehouse and field missions, suspending physics, guards, combat and mission timers. Resume restores mouse capture. Audio settings are accessible while paused. Terminal debrief/failure states are excluded. Local regressions check pause ownership, resume, terminal exclusion and independent settings persistence.
+
+- A separate FIELD RECORDS terminal in the safehouse opens the agent dossier with canonical mission reports, reputation and specialization. Locked, pending and legacy completions are distinct; no missing metrics are invented. Esc or the return button closes the dossier.
 
 ## Development policy
 

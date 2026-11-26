@@ -12,6 +12,7 @@ var equipment_owned: Array[String] = []
 const EQUIPMENT_COSTS := {"light_armor": 80, "utility_rig": 70, "quiet_kit": 65}
 const INTEL_STANDARD_COST := 60
 const INTEL_COORDINATED_COST := 40
+const INTEL_ROOK_COST := 50
 const HANDLER_AGREEMENTS := ["coordinate", "autonomy"]
 var field_reports: Dictionary = {}
 var specialization := ""
@@ -53,7 +54,7 @@ func load_campaign() -> void:
 		save_blocked = true
 		return
 	var paid: Variant = config.get_value("economy", "archive_intel_cost", 0)
-	if not paid is int or not paid in [0, INTEL_STANDARD_COST, INTEL_COORDINATED_COST] or (paid != 0 and saved == "") or (paid == INTEL_COORDINATED_COST and agreement != "coordinate"):
+	if not paid is int or not paid in [0, INTEL_STANDARD_COST, INTEL_COORDINATED_COST, INTEL_ROOK_COST] or (paid != 0 and saved == "") or (paid == INTEL_COORDINATED_COST and agreement != "coordinate") or (paid == INTEL_ROOK_COST and saved != "retain" and agreement != "autonomy"):
 		save_blocked = true
 		return
 	var owned: Variant = config.get_value("economy", "equipment_owned", [])
@@ -234,7 +235,15 @@ func available_credits() -> int:
 	return earned_credits() - spent
 
 func archive_intel_price() -> int:
-	return INTEL_COORDINATED_COST if handler_agreement == "coordinate" else INTEL_STANDARD_COST
+	if handler_agreement == "coordinate":
+		return INTEL_COORDINATED_COST
+	if independent_supplier_available():
+		return INTEL_ROOK_COST
+	return INTEL_STANDARD_COST
+
+func archive_intel_source() -> String:
+	var price := archive_intel_cost if owns_archive_intel() else archive_intel_price()
+	return "Rook" if price == INTEL_ROOK_COST else "Handler"
 
 func owns_archive_intel() -> bool:
 	return archive_intel_cost > 0

@@ -54,7 +54,11 @@ func run_regression() -> void:
 	check(Campaign.record_intel("retain", hotel_report), "record first mission")
 	check(Campaign.field_report("unexpected_guest") == hotel_report, "hotel performance stored")
 	check(Campaign.available_credits() == 180, "clean operation reward")
-	check(Campaign.archive_intel_price() == 60, "standard recon price")
+	check(Campaign.archive_intel_price() == 50 and Campaign.archive_intel_source() == "Rook", "independent recon quote")
+	Campaign.intel_choice = "share"
+	check(Campaign.archive_intel_price() == 60 and Campaign.archive_intel_source() == "Handler", "standard recon quote")
+	check(not Campaign.buy_equipment("quiet_kit"), "no independent access on share alone")
+	Campaign.intel_choice = "retain"
 	check(handler.assessment(hotel_report).contains("No shots, no damage"), "grounded clean assessment")
 	check(operations.report_summary(true, hotel_report).contains("— accuracy"), "zero shots has no accuracy")
 	hotel_report["seconds"] = 999
@@ -72,9 +76,9 @@ func run_regression() -> void:
 	check(not Campaign.negotiate_handler("invalid"), "invalid agreement rejected")
 	check(Campaign.negotiate_handler("coordinate"), "agreement saved")
 	check(Campaign.handler_trust() == 0 and Campaign.independent_leverage() == 1, "agreement changes trust")
-	check(Campaign.archive_intel_price() == 40, "coordination discount")
+	check(Campaign.archive_intel_price() == 40 and Campaign.archive_intel_source() == "Handler", "coordination discount beats Rook quote")
 	check(Campaign.buy_archive_intel(), "purchase recon")
-	check(Campaign.owns_archive_intel() and Campaign.available_credits() == 240, "debit once")
+	check(Campaign.owns_archive_intel() and Campaign.available_credits() == 240 and Campaign.archive_intel_source() == "Handler", "debit once and retain source")
 	check(not Campaign.buy_archive_intel(), "duplicate recon purchase rejected")
 	check(not Campaign.buy_equipment("invalid"), "unknown equipment rejected")
 	check(Campaign.buy_equipment("light_armor"), "buy armor")

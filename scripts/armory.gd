@@ -30,6 +30,10 @@ func _ready() -> void:
 	for item in ITEMS:
 		if item == "quiet_kit":
 			line("INDEPENDENT SUPPLIER / ROOK", 18)
+			if Campaign.independent_supplier_available():
+				line("Rook: I trade in access, not loyalty. My reconnaissance offers are in the briefing.", 16)
+			else:
+				line("Rook: Bring something to the table before we talk business.", 16)
 		line(NAMES[item] + " — " + EFFECTS[item], 20)
 		var button := Button.new()
 		button.custom_minimum_size.y = 42

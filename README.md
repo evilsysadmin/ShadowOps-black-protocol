@@ -39,6 +39,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Check temporary impact marker, hit-confirmation reticle and red damage flash. These are provisional visual effects and must not intercept input.
 
+- After extraction, choose 1 (share intel with handler) or 2 (retain for leverage). Check distinct trust/leverage outcomes and that the decision is applied once. Replay resets these prototype mission-local values; campaign persistence is not implemented yet.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

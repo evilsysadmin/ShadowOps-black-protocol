@@ -101,7 +101,7 @@ func _ready() -> void:
 func update_operation(index: int) -> void:
 	var operation := operation_ids[index]
 	operation_title.text = Operations.title_for(operation)
-	operation_description.text = Operations.description_for(operation, Campaign.intel_choice)
+	operation_description.text = Operations.description_for(operation, Campaign.intel_choice, Campaign.relay_route())
 	var completed := Campaign.operation_completed(operation)
 	operation_status.text = "REPLAY — original campaign record preserved." if completed else "NEW OPERATION"
 	intel_button.visible = operation == Operations.ARCHIVE
@@ -201,7 +201,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func _go(scene_path: String) -> void:
 	if transitioning:
 		return
-	if scene_path == HOTEL_SCENE or scene_path == ARCHIVE_SCENE:
+	if scene_path != SAFEHOUSE_SCENE:
 		if not Campaign.select_deployment_kit(Campaign.KITS[kit_selection.selected]):
 			error_label.text = "Invalid deployment kit."
 			return

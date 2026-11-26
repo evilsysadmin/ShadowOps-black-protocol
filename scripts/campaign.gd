@@ -51,7 +51,7 @@ func load_campaign() -> void:
 		save_blocked = true
 		return
 	for operation in reports:
-		if (operation != MISSION_ID and operation != "silent_archive") or (operation == MISSION_ID and saved == "") or (operation == "silent_archive" and not archive) or not valid_field_report(reports[operation]):
+		if (operation != MISSION_ID and operation != "silent_archive" and operation != "night_relay") or (operation == MISSION_ID and saved == "") or (operation in ["silent_archive", "night_relay"] and not archive) or not valid_field_report(reports[operation]):
 			save_blocked = true
 			return
 	var agreement: Variant = config.get_value("contacts", "handler_agreement", "")
@@ -87,6 +87,7 @@ func load_campaign() -> void:
 		save_blocked = true
 		return
 	var earnings := reward_for_completion(saved != "", reports.get(MISSION_ID, {})) + reward_for_completion(archive, reports.get("silent_archive", {}))
+	earnings += reward_for_completion(reports.has("night_relay"), reports.get("night_relay", {}))
 	earnings += contract_reward_for(contract, archive, reports.get("silent_archive", {}))
 	earnings += handler_reward_for(official_contract, archive, reports.get("silent_archive", {}))
 	if spent > earnings:
@@ -225,7 +226,7 @@ const Operations = preload("res://scripts/operation_catalog.gd")
 var selected_operation := Operations.HOTEL
 
 func available_operations() -> Array[String]:
-	return Operations.available_operations(not intel_choice.is_empty())
+	return Operations.available_operations(not intel_choice.is_empty(), archive_completed)
 
 func select_operation(operation: String) -> bool:
 	if not available_operations().has(operation):
@@ -240,6 +241,8 @@ func operation_completed(operation: String) -> bool:
 			return not intel_choice.is_empty()
 		Operations.ARCHIVE:
 			return archive_completed
+		Operations.RELAY:
+			return field_reports.has(Operations.RELAY)
 	return false
 
 func operation_reward(operation: String) -> int:
@@ -259,7 +262,7 @@ func reward_for_completion(completed: bool, report: Dictionary) -> int:
 	return reward
 
 func earned_credits() -> int:
-	return operation_reward(Operations.HOTEL) + operation_reward(Operations.ARCHIVE) + rook_contract_reward() + handler_contract_reward()
+	return operation_reward(Operations.HOTEL) + operation_reward(Operations.ARCHIVE) + operation_reward(Operations.RELAY) + rook_contract_reward() + handler_contract_reward()
 
 func available_credits() -> int:
 	var spent := archive_intel_cost
@@ -398,3 +401,18 @@ func archive_contract_summary() -> String:
 	if handler_contract_accepted:
 		return "Handler: " + handler_contract_status()
 	return ""
+
+func relay_route() -> String:
+	if handler_contract_reward() > 0:
+		return "handler"
+	if rook_contract_reward() > 0:
+		return "rook"
+	return "independent"
+
+func record_relay(report: Dictionary) -> bool:
+	if save_blocked or not archive_completed or not valid_field_report(report):
+		return false
+	if operation_completed(Operations.RELAY):
+		return true
+	var reports := reports_with(Operations.RELAY, report)
+	return write_campaign(intel_choice, specialization, archive_completed, reports, handler_agreement)

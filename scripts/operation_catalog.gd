@@ -2,17 +2,29 @@ extends RefCounted
 
 const HOTEL := "unexpected_guest"
 const ARCHIVE := "silent_archive"
+const RELAY := "night_relay"
 
-static func available_operations(first_complete: bool) -> Array[String]:
+static func available_operations(first_complete: bool, second_complete := false) -> Array[String]:
 	var result: Array[String] = [HOTEL]
 	if first_complete:
 		result.append(ARCHIVE)
+		if second_complete:
+			result.append(RELAY)
 	return result
 
 static func title_for(operation: String) -> String:
+	if operation == RELAY:
+		return "NIGHT RELAY"
 	return "SILENT ARCHIVE" if operation == ARCHIVE else "UNEXPECTED GUEST"
 
-static func description_for(operation: String, intel_choice: String) -> String:
+static func description_for(operation: String, intel_choice: String, relay_route := "independent") -> String:
+	if operation == RELAY:
+		match relay_route:
+			"handler":
+				return "Official access confirmed. Recover the relay drive and extract from the west entrance."
+			"rook":
+				return "Rook arranged a maintenance entrance. Recover the relay drive and extract from the east entrance."
+		return "No sponsor support. Recover the relay drive and return to the south entrance."
 	if operation == ARCHIVE:
 		if intel_choice == "share":
 			return "Your handler supplied access intelligence. Recover the archive ledger and return to extraction."
@@ -36,4 +48,6 @@ static func scene_for(operation: String) -> String:
 			return "res://scenes/hotel.tscn"
 		ARCHIVE:
 			return "res://scenes/archive.tscn"
+		RELAY:
+			return "res://scenes/relay.tscn"
 	return ""

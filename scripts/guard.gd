@@ -105,6 +105,8 @@ func request_distraction() -> bool:
 	if health <= 0 or state not in [GuardState.PATROL, GuardState.SUSPICIOUS]:
 		return false
 	begin_search(false)
+	if is_instance_valid(status):
+		update_status()
 	return true
 
 func begin_search(from_alert: bool) -> void:

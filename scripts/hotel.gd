@@ -147,7 +147,7 @@ func material(color: Color, glow := false) -> StandardMaterial3D:
 		mat.emission_energy_multiplier = 0.8
 	return mat
 
-func box(at: Vector3, dimensions: Vector3, color: Color, solid := true, glow := false, visible_mesh := true) -> Node3D
+func box(at: Vector3, dimensions: Vector3, color: Color, solid := true, glow := false, visible_mesh := true) -> Node3D:
 	var root := Node3D.new()
 	if solid:
 		root = StaticBody3D.new()

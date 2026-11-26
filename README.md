@@ -79,7 +79,7 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Operational credits derive from the first successful completion of each operation: 100 base, +40 for no full alert, +20 for no damage, +20 for no shots and guard not down. Older completed saves without metrics receive only the base. Replays cannot increase earnings. FIELD RECORDS displays credits. Silent Archive briefing offers a permanent reconnaissance purchase for 60 credits (40 with the coordination agreement). The purchased information reflects the actual level layout; ownership and paid cost are persisted atomically. Duplicate purchases are rejected. The original entry route is unchanged.
 
-- Persistent armory inventory supports light armor (80 credits) and utility rig (70 credits). Ownership is unique, purchases debit the same canonical balance as reconnaissance, and incompatible or overspent saves are blocked. The physical armory and deployment effects follow separately.
+- Persistent armory inventory supports light armor (80 credits) and utility rig (70 credits). Ownership is unique, purchases debit the same canonical balance as reconnaissance, and incompatible or overspent saves are blocked. The ARMORY terminal is on the left of the safehouse operations desk. Purchases require confirmation and are automatically equipped on field deployments only: armor adds 15 maximum health and utility rig adds 8 reserve rounds, stacking with kits and specialization. The briefing shows owned bonuses. Local smoke includes the armory scene and field stat regressions.
 
 ## Development policy
 

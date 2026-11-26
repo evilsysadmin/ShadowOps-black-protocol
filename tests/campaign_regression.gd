@@ -79,6 +79,8 @@ func run_regression() -> void:
 	check(Campaign.buy_equipment("light_armor"), "buy armor")
 	check(not Campaign.buy_equipment("light_armor"), "duplicate equipment rejected")
 	check(Campaign.available_credits() == 160, "equipment and recon debited")
+	check(Campaign.buy_equipment("utility_rig"), "buy utility rig")
+	check(Campaign.available_credits() == 90, "both equipment purchases debited")
 	check(not Campaign.negotiate_handler("autonomy"), "agreement cannot be farmed or changed")
 	check(Campaign.intel_choice == "retain", "negotiation preserves route decision")
 	check(Campaign.has_skill_point(), "mission awards one skill point")
@@ -102,7 +104,7 @@ func run_regression() -> void:
 	Campaign.equipment_owned.clear()
 	Campaign.load_campaign()
 	check(Campaign.handler_agreement == "coordinate", "agreement survives reload")
-	check(Campaign.earned_credits() == 280 and Campaign.available_credits() == 160 and Campaign.owns_archive_intel() and Campaign.owns_equipment("light_armor"), "equipment, recon and balance survive reload")
+	check(Campaign.earned_credits() == 280 and Campaign.available_credits() == 90 and Campaign.owns_archive_intel() and Campaign.owns_equipment("light_armor") and Campaign.owns_equipment("utility_rig"), "equipment, recon and balance survive reload")
 	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")
 	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")
@@ -113,12 +115,12 @@ func run_regression() -> void:
 	var agent := hotel.get_node_or_null("Agent")
 	check(is_instance_valid(agent), "hotel agent exists")
 	if is_instance_valid(agent):
-		check(int(agent.get("maximum_health")) == 145, "resilience and protection stack")
-		check(int(agent.get("health")) == 145, "spawn with full health")
+		check(int(agent.get("maximum_health")) == 160, "armor, resilience and protection stack")
+		check(int(agent.get("health")) == 160, "spawn with full health")
 		var combat: Node = agent.get("combat")
 		check(is_instance_valid(combat), "field combat exists")
 		if is_instance_valid(combat):
-			check(int(combat.get("reserve")) == 16, "kit affects combat reserve")
+			check(int(combat.get("reserve")) == 24, "utility rig stacks with kit reserve")
 	var guard := hotel.get_node_or_null("Guard")
 	check(is_instance_valid(guard), "hotel guard exists")
 	if is_instance_valid(guard):

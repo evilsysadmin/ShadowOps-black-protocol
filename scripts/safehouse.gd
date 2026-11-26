@@ -2,6 +2,7 @@ extends Node3D
 
 const TERMINAL := Vector3(0, 1.25, -3.0)
 const DOSSIER := Vector3(2.65, 1.25, -3.6)
+const ARMORY := Vector3(-2.65, 1.25, -3.6)
 const WALL := Color(0.19, 0.22, 0.25)
 const WOOD := Color(0.29, 0.19, 0.13)
 const METAL := Color(0.13, 0.17, 0.19)
@@ -42,6 +43,14 @@ func _ready() -> void:
 		block(Vector3(0, 3.04, z), Vector3(2.0, 0.08, 0.15), Color(1.0, 0.78, 0.52), false, true)
 	block(Vector3(2.65, 0.52, -4.25), Vector3(1.55, 1.04, 0.8), METAL)
 	block(Vector3(2.65, 1.18, -4.32), Vector3(1.35, 0.26, 0.10), Color(0.18, 0.55, 0.52), false, true)
+	block(Vector3(-2.65, 0.52, -4.25), Vector3(1.55, 1.04, 0.8), METAL)
+	block(Vector3(-2.65, 1.16, -4.25), Vector3(1.4, 0.2, 0.55), Color(0.36, 0.40, 0.35), false)
+	var armory_sign := Label3D.new()
+	armory_sign.text = "ARMORY"
+	armory_sign.position = Vector3(-2.65, 2.05, -4.72)
+	armory_sign.font_size = 36
+	armory_sign.pixel_size = 0.004
+	add_child(armory_sign)
 	var dossier_sign := Label3D.new()
 	dossier_sign.text = "FIELD RECORDS"
 	dossier_sign.position = Vector3(2.65, 2.05, -4.72)
@@ -89,9 +98,13 @@ func _physics_process(_delta: float) -> void:
 	var origin := player.global_position + Vector3(0, 1.25, 0)
 	var operations_distance := origin.distance_to(TERMINAL)
 	var dossier_distance := origin.distance_to(DOSSIER)
+	var armory_distance := origin.distance_to(ARMORY)
 	var destination := ""
-	prompt.text = "Approach operations or field records"
-	if dossier_distance <= 1.65 and dossier_distance < operations_distance:
+	prompt.text = "Approach operations, field records or armory"
+	if armory_distance <= 1.65 and armory_distance < minf(operations_distance, dossier_distance):
+		prompt.text = "[E] Armory"
+		destination = "res://scenes/armory.tscn"
+	elif dossier_distance <= 1.65 and dossier_distance < operations_distance:
 		prompt.text = "[E] Field records"
 		destination = "res://scenes/dossier.tscn"
 	elif operations_distance <= 1.65:

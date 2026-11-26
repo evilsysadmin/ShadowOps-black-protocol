@@ -68,6 +68,13 @@ func _ready() -> void:
 	kit_selection.item_selected.connect(update_kit_description)
 	kit_selection.select(0)
 	update_kit_description(0)
+	var bonuses: Array[String] = []
+	if Campaign.owns_equipment("light_armor"):
+		bonuses.append("+15 health")
+	if Campaign.owns_equipment("utility_rig"):
+		bonuses.append("+8 reserve rounds")
+	if not bonuses.is_empty():
+		add_line(panel, "Owned equipment: " + ", ".join(bonuses), 16, Color(0.66, 0.83, 0.80))
 	var audio_settings := HBoxContainer.new()
 	audio_settings.set_script(preload("res://scripts/audio_settings.gd"))
 	panel.add_child(audio_settings)

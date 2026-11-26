@@ -7,6 +7,9 @@ const MISSION_ID := "unexpected_guest"
 var intel_choice := ""
 var archive_completed := false
 var handler_agreement := ""
+var archive_intel_cost := 0
+const INTEL_STANDARD_COST := 60
+const INTEL_COORDINATED_COST := 40
 const HANDLER_AGREEMENTS := ["coordinate", "autonomy"]
 var field_reports: Dictionary = {}
 var specialization := ""
@@ -47,6 +50,11 @@ func load_campaign() -> void:
 	if not agreement is String or (agreement != "" and (saved == "" or not HANDLER_AGREEMENTS.has(agreement))):
 		save_blocked = true
 		return
+	var paid: Variant = config.get_value("economy", "archive_intel_cost", 0)
+	if not paid is int or not paid in [0, INTEL_STANDARD_COST, INTEL_COORDINATED_COST] or (paid != 0 and saved == "") or (paid == INTEL_COORDINATED_COST and agreement != "coordinate"):
+		save_blocked = true
+		return
+	archive_intel_cost = paid
 	handler_agreement = agreement
 	field_reports = reports.duplicate(true)
 	archive_completed = archive
@@ -71,7 +79,8 @@ func choose_specialization(value: String) -> bool:
 		return false
 	return write_campaign(intel_choice, value, archive_completed, field_reports, handler_agreement)
 
-func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary, agreement: String) -> bool:
+func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary, agreement: String, intel_cost: int = -1) -> bool:
+	var paid := archive_intel_cost if intel_cost == -1 else intel_cost
 	var config := ConfigFile.new()
 	config.set_value("meta", "schema", SCHEMA)
 	config.set_value("missions", MISSION_ID, choice)
@@ -79,6 +88,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	config.set_value("missions", "field_reports", reports)
 	config.set_value("progression", "specialization", skill)
 	config.set_value("contacts", "handler_agreement", agreement)
+	config.set_value("economy", "archive_intel_cost", paid)
 	if config.save(TEMP_PATH) != OK:
 		return false
 	if DirAccess.rename_absolute(ProjectSettings.globalize_path(TEMP_PATH), ProjectSettings.globalize_path(SAVE_PATH)) != OK:
@@ -86,6 +96,7 @@ func write_campaign(choice: String, skill: String, completed_archive: bool, repo
 	intel_choice = choice
 	specialization = skill
 	archive_completed = completed_archive
+	archive_intel_cost = paid
 	handler_agreement = agreement
 	field_reports = reports.duplicate(true)
 	return true
@@ -191,4 +202,16 @@ func earned_credits() -> int:
 	return operation_reward(Operations.HOTEL) + operation_reward(Operations.ARCHIVE)
 
 func available_credits() -> int:
-	return earned_credits()
+	return earned_credits() - archive_intel_cost
+
+func archive_intel_price() -> int:
+	return INTEL_COORDINATED_COST if handler_agreement == "coordinate" else INTEL_STANDARD_COST
+
+func owns_archive_intel() -> bool:
+	return archive_intel_cost > 0
+
+func buy_archive_intel() -> bool:
+	var price := archive_intel_price()
+	if save_blocked or intel_choice.is_empty() or owns_archive_intel() or available_credits() < price:
+		return false
+	return write_campaign(intel_choice, specialization, archive_completed, field_reports, handler_agreement, price)

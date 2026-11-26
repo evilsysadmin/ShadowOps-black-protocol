@@ -11,6 +11,8 @@ var operation_ids: Array[String] = []
 var operation_title: Label
 var operation_description: Label
 var operation_status: Label
+var intel_button: Button
+var intel_confirmation: ConfirmationDialog
 var kit_selection: OptionButton
 var kit_description: Label
 var agent_status: Label
@@ -40,6 +42,12 @@ func _ready() -> void:
 	add_line(panel, "BRIEFING  /  CLASSIFIED", 16, Color(0.75, 0.64, 0.43))
 	operation_description = add_line(panel, "", 20, Color(0.85, 0.89, 0.89))
 	operation_status = add_line(panel, "", 17, Color(0.75, 0.64, 0.43))
+	intel_button = Button.new()
+	intel_button.pressed.connect(request_intel)
+	panel.add_child(intel_button)
+	intel_confirmation = ConfirmationDialog.new()
+	intel_confirmation.confirmed.connect(purchase_intel)
+	add_child(intel_confirmation)
 	operation_selection.item_selected.connect(update_operation)
 	var initial := operation_ids.size() - 1
 	operation_selection.select(initial)
@@ -87,6 +95,30 @@ func update_operation(index: int) -> void:
 	operation_description.text = Operations.description_for(operation, Campaign.intel_choice)
 	var completed := Campaign.archive_completed if operation == Operations.ARCHIVE else not Campaign.intel_choice.is_empty()
 	operation_status.text = "REPLAY — original campaign record preserved." if completed else "NEW OPERATION"
+	intel_button.visible = operation == Operations.ARCHIVE
+	if operation == Operations.ARCHIVE:
+		if Campaign.owns_archive_intel():
+			operation_description.text += "\nRecon: records at the far end, guard patrols the central aisle."
+			intel_button.text = "Recon acquired · %d credits remaining" % Campaign.available_credits()
+			intel_button.disabled = true
+		else:
+			intel_button.text = "Purchase permanent recon (%d credits) · balance %d" % [Campaign.archive_intel_price(), Campaign.available_credits()]
+			intel_button.disabled = Campaign.save_blocked or Campaign.available_credits() < Campaign.archive_intel_price()
+
+func request_intel() -> void:
+	if transitioning or operation_ids[operation_selection.selected] != Operations.ARCHIVE or Campaign.owns_archive_intel():
+		return
+	intel_confirmation.dialog_text = "Spend %d credits to unlock the archive reconnaissance permanently?" % Campaign.archive_intel_price()
+	intel_confirmation.popup_centered()
+
+func purchase_intel() -> void:
+	if transitioning or operation_ids[operation_selection.selected] != Operations.ARCHIVE:
+		return
+	if not Campaign.buy_archive_intel():
+		error_label.text = "Unable to purchase reconnaissance."
+		return
+	error_label.text = ""
+	update_operation(operation_selection.selected)
 
 func _deploy() -> void:
 	var operation := operation_ids[operation_selection.selected]
@@ -149,7 +181,7 @@ func add_line(parent: VBoxContainer, message: String, font_size: int, tint: Colo
 	return label
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
+	if event.is_action_pressed("ui_cancel") and not intel_confirmation.visible:
 		get_viewport().set_input_as_handled()
 		_go(SAFEHOUSE_SCENE)
 

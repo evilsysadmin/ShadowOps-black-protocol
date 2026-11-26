@@ -14,15 +14,15 @@ godot --path .
 godot -e --path .
 ```
 
-Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, R reload (or replay after mission ends), mouse look, Esc releases the pointer, left click recaptures it.
+Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, R reload (or return to the safehouse after mission ends), mouse look, Esc releases the pointer, left click recaptures it.
 
 ## Local startup gate
 
-Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup, failing even on logged script errors with a zero engine exit code. It does not validate gameplay.
+Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing and hotel, failing even on logged script errors with a zero engine exit code. It does not validate gameplay.
 
 ## Local smoke checklist
 
-- Game starts in the walkable safehouse. Approach the operations desk and press E to deploy; no combat in the safehouse. R after mission completion/failure returns to the safehouse. Verify that campaign state is retained and a new deployment resets mission resources.
+- Game starts in the walkable safehouse. Approach the operations desk and press E to open the briefing; review objectives, deploy or return to the safehouse without starting the mission; no combat in the safehouse. R after mission completion/failure returns to the safehouse. Verify that campaign state is retained and a new deployment resets mission resources.
 
 - Initial hotel scene loads and renders (confirmed by user screenshot on initial bootstrap).
 - Check forward, backward and diagonal movement, sprint and stopping.
@@ -31,7 +31,7 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 - No runtime errors in the debugger.
 
 - Check training target hit feedback and that solid obstacles block shots.
-- Guard patrols; suspicion rises with visible player and falls when line of sight breaks. Full detection starts an alert instead of instantly ending the mission. Guard damages the agent at intervals while visible, searches in place after losing sight and eventually resumes patrol. At zero health, the mission fails; R retries. Guard can be defeated using the test combat system.
+- Guard patrols; suspicion rises with visible player and falls when line of sight breaks. Full detection starts an alert instead of instantly ending the mission. Guard damages the agent at intervals while visible, searches in place after losing sight and eventually resumes patrol. At zero health, the mission fails; R returns to the safehouse. Guard can be defeated using the test combat system.
 
 - Hold Ctrl to crouch: lower collision capsule, camera and movement speed; release to stand when space permits. Crouching reduces guard visual detection, not invisibility. Check crouched aiming and interaction.
 

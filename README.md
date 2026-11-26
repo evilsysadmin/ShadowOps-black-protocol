@@ -18,7 +18,7 @@ Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, Q switch shoulder, E i
 
 ## Local startup gate
 
-Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing and hotel, failing even on logged script errors with a zero engine exit code. It does not validate gameplay.
+Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing and hotel, failing even on logged script errors with a zero engine exit code. It also runs a campaign/equipment regression scene, with temporary Linux XDG directories so your real campaign is not touched. The test verifies canonical decisions, skill-point limits, persistence, kit isolation, and actual initial agent/combat stats in the hotel and safehouse. It does not replace interactive playtesting.
 
 ## Local smoke checklist
 

@@ -23,7 +23,10 @@ var body_collider: CollisionShape3D
 var body_capsule: CapsuleShape3D
 var crouched := false
 const MAX_HEALTH := 100
+var maximum_health := MAX_HEALTH
 var health := MAX_HEALTH
+var crouch_speed := 1.25
+var sprint_speed := RUN_SPEED
 var health_label: Label
 var damage_overlay: ColorRect
 var damage_flash := 0.0
@@ -31,6 +34,14 @@ const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.12
 
 func _ready() -> void:
+	match Campaign.specialization:
+		"resilience":
+			maximum_health += 20
+		"infiltration":
+			crouch_speed = 1.65
+		"mobility":
+			sprint_speed = 6.4
+	health = maximum_health
 	var collider := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.32
@@ -153,7 +164,7 @@ func _physics_process(delta: float) -> void:
 		).limit_length()
 	update_stance(controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_physical_key_pressed(KEY_CTRL), delta)
 	var sprint := Input.is_physical_key_pressed(KEY_SHIFT) and not crouched
-	var speed := 1.25 if crouched else (2.0 if aiming else (RUN_SPEED if sprint else WALK_SPEED))
+	var speed := crouch_speed if crouched else (2.0 if aiming else (sprint_speed if sprint else WALK_SPEED))
 	var direction := transform.basis * Vector3(axes.x, 0, axes.y)
 	velocity.x = move_toward(velocity.x, direction.x * speed, ACCELERATION * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, ACCELERATION * delta)
@@ -214,7 +225,7 @@ func receive_damage(amount: int) -> void:
 		get_parent().get_node("Mission").call("agent_incapacitated")
 
 func refresh_health() -> void:
-	health_label.text = "HEALTH %d / %d" % [health, MAX_HEALTH]
+	health_label.text = "HEALTH %d / %d" % [health, maximum_health]
 	health_label.modulate = Color(1.0, 0.38, 0.30) if health <= 30 else Color(0.85, 0.95, 0.90)
 
 func eye_height() -> float:

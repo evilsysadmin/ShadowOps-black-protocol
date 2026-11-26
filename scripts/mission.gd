@@ -5,6 +5,7 @@ enum IntelDecision { UNDECIDED, SHARE, RETAIN }
 var intel_decision: IntelDecision = IntelDecision.UNDECIDED
 var campaign_replay := false
 var record_failed := false
+var specialization_save_failed := false
 var decision_label: Label
 
 const INTEL_POINT := Vector3(-3.65, 1.38, -3.92)
@@ -94,6 +95,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif event.physical_keycode == KEY_2:
 			resolve_intel(IntelDecision.RETAIN)
 		return
+	if stage == Stage.COMPLETE and Campaign.has_skill_point():
+		var skill := ""
+		match event.physical_keycode:
+			KEY_3:
+				skill = "resilience"
+			KEY_4:
+				skill = "infiltration"
+			KEY_5:
+				skill = "mobility"
+		if not skill.is_empty():
+			specialization_save_failed = not Campaign.choose_specialization(skill)
+			refresh_objective()
+			return
 	if event.physical_keycode == KEY_R and (stage == Stage.COMPLETE or stage == Stage.FAILED):
 		get_tree().reload_current_scene()
 	elif event.physical_keycode == KEY_E and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -179,6 +193,12 @@ func refresh_objective() -> void:
 				decision_label.text = "CAMPAIGN | HANDLER TRUST  %+d   |   LEVERAGE  %+d" % [Campaign.handler_trust(), Campaign.independent_leverage()]
 				if campaign_replay:
 					decision_label.text += "\nReplay choice not recorded; original decision preserved"
+			if Campaign.has_skill_point():
+				decision_label.text += "\n\n1 skill point — choose your specialization:\n[3] Resilience (+20 health)  [4] Infiltration (faster crouch)\n[5] Mobility (faster sprint)"
+				if specialization_save_failed:
+					decision_label.text += "\nSave failed — try the selection again"
+			elif not Campaign.specialization.is_empty():
+				decision_label.text += "\nSpecialization: " + Campaign.specialization.capitalize() + " (active next deployment)"
 			decision_label.show()
 			prompt.text = "Mission complete — press R to replay"
 		Stage.FAILED:

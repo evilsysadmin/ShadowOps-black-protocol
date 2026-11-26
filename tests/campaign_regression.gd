@@ -116,7 +116,7 @@ func run_regression() -> void:
 	check(is_instance_valid(agent), "hotel agent exists")
 	if is_instance_valid(agent):
 		check(int(agent.get("maximum_health")) == 160, "armor, resilience and protection stack")
-		check(int(agent.get("health")) == 145, "spawn with full health")
+		check(int(agent.get("health")) == 160, "spawn with full health")
 		var combat: Node = agent.get("combat")
 		check(is_instance_valid(combat), "field combat exists")
 		if is_instance_valid(combat):

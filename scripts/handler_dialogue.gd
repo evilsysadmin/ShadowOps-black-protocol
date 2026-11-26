@@ -33,3 +33,16 @@ static func recovered_message(archive: bool, choice: String) -> String:
 	if archive and choice != "share":
 		return "AGENT / Ledger secured. Time to leave."
 	return "HANDLER / " + ("Ledger" if archive else "File") + " secured. Proceed to extraction."
+
+static func negotiation_offer(choice: String) -> String:
+	if choice == "share":
+		return "We have a workable relationship. I want a formal agreement on how we handle future intelligence."
+	return "You kept the hotel file. We need to establish terms before this becomes a rather expensive misunderstanding."
+
+static func negotiation_reply(agreement: String) -> String:
+	match agreement:
+		"coordinate":
+			return "Agreed. We coordinate intelligence from now on. I expect transparency."
+		"autonomy":
+			return "You want autonomy? Fine. But don't mistake independence for a blank cheque."
+	return "No agreement recorded."

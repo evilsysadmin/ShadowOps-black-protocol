@@ -61,6 +61,14 @@ func run_regression() -> void:
 		check(is_instance_valid(combat), "field combat exists")
 		if is_instance_valid(combat):
 			check(int(combat.get("reserve")) == 16, "kit affects combat reserve")
+	var guard := hotel.get_node_or_null("Guard")
+	check(is_instance_valid(guard), "hotel guard exists")
+	if is_instance_valid(guard):
+		var guard_visual: Node3D = guard.get("body")
+		check(is_instance_valid(guard_visual), "guard visual rig exists")
+		if is_instance_valid(guard_visual):
+			check(guard_visual.get("knees").size() == 2, "guard articulated knees")
+			check(guard_visual.get("elbows").size() == 2, "guard articulated elbows")
 	hotel.queue_free()
 	await get_tree().process_frame
 	var safehouse: Node = preload("res://scenes/safehouse.tscn").instantiate()

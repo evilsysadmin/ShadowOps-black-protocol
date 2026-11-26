@@ -69,6 +69,31 @@ func run_regression() -> void:
 		if is_instance_valid(guard_visual):
 			check(guard_visual.get("knees").size() == 2, "guard articulated knees")
 			check(guard_visual.get("elbows").size() == 2, "guard articulated elbows")
+	if is_instance_valid(agent):
+		var field_agent := agent as CharacterBody3D
+		field_agent.set_physics_process(false)
+		field_agent.global_position = Vector3(-3.65, 0.05, 6.65)
+		field_agent.rotation.y = 0.0
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		field_agent.set("cover_requested", true)
+		field_agent.call("update_cover")
+		check(bool(field_agent.get("cover_active")), "enter nearby low cover")
+		if bool(field_agent.get("cover_active")):
+			var normal: Vector3 = field_agent.get("cover_normal")
+			check(normal.dot(Vector3.BACK) > 0.95, "cover normal matches barrier face")
+			check(bool(field_agent.call("cover_contact")), "cover remains in contact")
+		field_agent.set("cover_requested", true)
+		field_agent.call("update_cover")
+		check(not bool(field_agent.get("cover_active")), "toggle cover off")
+		field_agent.set("cover_requested", true)
+		field_agent.call("update_cover")
+		check(bool(field_agent.get("cover_active")), "reenter low cover")
+		field_agent.global_position = Vector3(-1.7, 0.05, 6.65)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		field_agent.call("update_cover")
+		check(not bool(field_agent.get("cover_active")), "leave cover at edge")
 	hotel.queue_free()
 	await get_tree().process_frame
 	var safehouse: Node = preload("res://scenes/safehouse.tscn").instantiate()

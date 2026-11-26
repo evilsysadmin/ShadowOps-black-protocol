@@ -1,60 +1,99 @@
 extends CharacterBody3D
 
-const SPEED := 4.0
+const WALK_SPEED := 3.6
+const RUN_SPEED := 5.6
+const ACCELERATION := 16.0
 const SENSITIVITY := 0.003
+const SUIT := Color(0.105, 0.135, 0.16)
+const TROUSERS := Color(0.085, 0.105, 0.12)
+const SKIN := Color(0.58, 0.39, 0.29)
 var pivot: Node3D
 var model: Node3D
+var camera: Camera3D
+var legs: Array[Node3D] = []
+var arms: Array[Node3D] = []
+var phase := 0.0
+var stride := 0.0
+var shoulder := 1.0
 
 func _ready() -> void:
 	var collider := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()
 	capsule.radius = 0.32
-	capsule.height = 1.75
+	capsule.height = 1.8
 	collider.shape = capsule
-	collider.position.y = 0.875
+	collider.position.y = 0.9
 	add_child(collider)
-	model = Node3D.new()
-	add_child(model)
-	part(Vector3(0, 1.15, 0), Vector3(0.53, 0.68, 0.32), Color(0.12, 0.15, 0.19))
-	part(Vector3(0, 1.67, 0), Vector3(0.26, 0.29, 0.25), Color(0.56, 0.40, 0.31))
-	for x in [-0.15, 0.15]:
-		part(Vector3(x, 0.43, 0), Vector3(0.24, 0.86, 0.27), Color(0.09, 0.11, 0.13))
-	for x in [-0.36, 0.36]:
-		part(Vector3(x, 1.12, 0), Vector3(0.18, 0.62, 0.2), Color(0.12, 0.15, 0.19))
+	build_model()
 	pivot = Node3D.new()
-	pivot.position = Vector3(0.65, 1.65, 0)
+	pivot.position = Vector3(0.62, 1.63, 0)
+	pivot.rotation.x = -0.10
 	add_child(pivot)
 	var boom := SpringArm3D.new()
-	boom.spring_length = 3.1
+	boom.spring_length = 2.65
 	boom.margin = 0.15
 	boom.add_excluded_object(get_rid())
+	var camera_shape := SphereShape3D.new()
+	camera_shape.radius = 0.13
+	boom.shape = camera_shape
 	pivot.add_child(boom)
-	var camera := Camera3D.new()
-	camera.fov = 72.0
+	camera = Camera3D.new()
+	camera.fov = 70.0
 	camera.current = true
 	boom.add_child(camera)
 	var hud := CanvasLayer.new()
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
-	label.text = "BLACK PROTOCOL | HOTEL PROTOTYPE\nWASD / arrows: move   Mouse: look   Esc: release mouse\nClick to capture mouse"
+	label.text = "BLACK PROTOCOL | LOCOMOTION TEST\nWASD / arrows · Shift: sprint · Q: shoulder\nMouse: look · Esc: release · Click: capture"
 	hud.add_child(label)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
-func part(at: Vector3, size: Vector3, color: Color) -> void:
+func build_model() -> void:
+	model = Node3D.new()
+	add_child(model)
+	ellipsoid(model, Vector3(0, 1.27, 0), Vector3(0.51, 0.62, 0.34), SUIT)
+	ellipsoid(model, Vector3(0, 0.96, 0), Vector3(0.39, 0.25, 0.29), TROUSERS)
+	ellipsoid(model, Vector3(0, 1.54, 0), Vector3(0.15, 0.16, 0.15), SKIN)
+	ellipsoid(model, Vector3(0, 1.69, 0), Vector3(0.245, 0.31, 0.25), SKIN)
+	ellipsoid(model, Vector3(0, 1.76, 0.025), Vector3(0.25, 0.18, 0.24), Color(0.075, 0.055, 0.045))
+	ellipsoid(model, Vector3(0, 1.40, -0.15), Vector3(0.13, 0.26, 0.06), Color(0.53, 0.55, 0.55))
+	for side in [-1.0, 1.0]:
+		var leg := Node3D.new()
+		leg.position = Vector3(side * 0.12, 0.92, 0)
+		model.add_child(leg)
+		legs.append(leg)
+		ellipsoid(leg, Vector3(0, -0.23, 0), Vector3(0.21, 0.49, 0.22), TROUSERS)
+		ellipsoid(leg, Vector3(0, -0.63, 0), Vector3(0.17, 0.40, 0.18), TROUSERS)
+		ellipsoid(leg, Vector3(0, -0.84, -0.055), Vector3(0.19, 0.14, 0.33), Color(0.045, 0.055, 0.06))
+		var arm := Node3D.new()
+		arm.position = Vector3(side * 0.29, 1.44, 0)
+		model.add_child(arm)
+		arms.append(arm)
+		ellipsoid(arm, Vector3(side * 0.025, -0.16, 0), Vector3(0.20, 0.35, 0.23), SUIT)
+		ellipsoid(arm, Vector3(side * 0.04, -0.44, 0), Vector3(0.15, 0.28, 0.17), SUIT)
+		ellipsoid(arm, Vector3(side * 0.04, -0.61, 0), Vector3(0.13, 0.17, 0.12), SKIN)
+
+func ellipsoid(parent: Node3D, at: Vector3, dimensions: Vector3, color: Color) -> void:
 	var mesh := MeshInstance3D.new()
-	var geometry := BoxMesh.new()
-	geometry.size = size
+	var geometry := SphereMesh.new()
+	geometry.radial_segments = 16
+	geometry.rings = 8
 	mesh.mesh = geometry
+	mesh.scale = dimensions
 	var material := StandardMaterial3D.new()
 	material.albedo_color = color
+	material.roughness = 0.85
 	mesh.material_override = material
 	mesh.position = at
-	model.add_child(mesh)
+	parent.add_child(mesh)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_ESCAPE:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+		elif event.physical_keycode == KEY_Q:
+			shoulder *= -1.0
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	elif event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -62,13 +101,30 @@ func _unhandled_input(event: InputEvent) -> void:
 		pivot.rotation.x = clampf(pivot.rotation.x - event.relative.y * SENSITIVITY, -0.65, 0.55)
 
 func _physics_process(delta: float) -> void:
-	var axes := Vector2(
-		float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
-		float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
-	).limit_length()
+	var axes := Vector2.ZERO
+	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		axes = Vector2(
+			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
+			float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
+		).limit_length()
+	var sprint := Input.is_physical_key_pressed(KEY_SHIFT)
+	var speed := RUN_SPEED if sprint else WALK_SPEED
 	var direction := transform.basis * Vector3(axes.x, 0, axes.y)
-	velocity.x = direction.x * SPEED
-	velocity.z = direction.z * SPEED
+	velocity.x = move_toward(velocity.x, direction.x * speed, ACCELERATION * delta)
+	velocity.z = move_toward(velocity.z, direction.z * speed, ACCELERATION * delta)
 	if not is_on_floor():
 		velocity.y -= 9.8 * delta
+	else:
+		velocity.y = 0.0
 	move_and_slide()
+	if axes.length_squared() > 0.01:
+		model.rotation.y = lerp_angle(model.rotation.y, atan2(-axes.x, -axes.y), 1.0 - exp(-12.0 * delta))
+	pivot.position.x = lerpf(pivot.position.x, shoulder * 0.62, 1.0 - exp(-10.0 * delta))
+	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
+	stride = lerpf(stride, clampf(actual_speed / WALK_SPEED, 0.0, 1.35), 1.0 - exp(-12.0 * delta))
+	phase += delta * (5.0 + actual_speed * 1.4)
+	for i in range(2):
+		var swing := sin(phase + float(i) * PI) * stride
+		legs[i].rotation.x = swing * 0.56
+		arms[i].rotation.x = -swing * 0.38
+	model.position.y = absf(sin(phase)) * stride * 0.035

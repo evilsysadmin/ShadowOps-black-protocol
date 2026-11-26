@@ -13,6 +13,8 @@ var camera: Camera3D
 var shoulder := 1.0
 var controls_enabled := true
 var field_mode := true
+const EventAudio = preload("res://scripts/event_audio.gd")
+var event_audio: EventAudio
 var combat: Node
 var aiming := false
 var boom: SpringArm3D
@@ -73,6 +75,8 @@ func _ready() -> void:
 	camera.current = true
 	boom.add_child(camera)
 	if field_mode:
+		event_audio = EventAudio.new()
+		add_child(event_audio)
 		combat = Node.new()
 		combat.set_script(preload("res://scripts/combat.gd"))
 		add_child(combat)
@@ -264,10 +268,15 @@ func receive_damage(amount: int) -> void:
 	if not field_mode or not controls_enabled or amount <= 0:
 		return
 	health = maxi(0, health - amount)
+	play_cue("damage")
 	damage_flash = 0.30
 	refresh_health()
 	if health == 0:
 		get_parent().get_node("Mission").call("agent_incapacitated")
+
+func play_cue(key: String) -> void:
+	if is_instance_valid(event_audio):
+		event_audio.cue(key)
 
 func refresh_health() -> void:
 	health_label.text = "HEALTH %d / %d" % [health, maximum_health]

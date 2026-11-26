@@ -139,6 +139,7 @@ func _physics_process(delta: float) -> void:
 	if reachable:
 		prompt.text = ("[E] Recover ledger" if archive_operation else "[E] Recover intel") if stage == Stage.RECOVER else "[E] Extract"
 	if interact_requested and reachable and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
+		player.call("play_cue", "objective")
 		if stage == Stage.RECOVER:
 			stage = Stage.EXTRACT
 			intel.hide()
@@ -177,6 +178,7 @@ func agent_incapacitated() -> void:
 	if stage == Stage.COMPLETE or stage == Stage.FAILED or stage == Stage.DEBRIEF:
 		return
 	stage = Stage.FAILED
+	player.call("play_cue", "failure")
 	interact_requested = false
 	player.set("controls_enabled", false)
 	intel.hide()

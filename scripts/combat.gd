@@ -16,6 +16,8 @@ var reload_requested := false
 var hit_flash := 0.0
 var impact_mark: MeshInstance3D
 var impact_time := 0.0
+var shots_fired := 0
+var target_hits := 0
 
 func _ready() -> void:
 	agent = get_parent() as CharacterBody3D
@@ -105,6 +107,7 @@ func _physics_process(delta: float) -> void:
 	elif pending and aiming and cooldown <= 0.0:
 		if rounds > 0:
 			rounds -= 1
+			shots_fired += 1
 			fire()
 			cooldown = 0.28
 		else:
@@ -139,6 +142,7 @@ func fire() -> void:
 		feedback.text = "IMPACT"
 		if is_instance_valid(target) and target.has_method("receive_hit"):
 			target.call("receive_hit", 1)
+			target_hits += 1
 			feedback.text = "TARGET HIT"
 			hit_flash = 0.18
 	feedback_time = 0.65

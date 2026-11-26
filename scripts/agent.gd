@@ -184,7 +184,8 @@ func _physics_process(delta: float) -> void:
 	boom.spring_length = lerpf(boom.spring_length, 1.9 if aiming else 2.65, 1.0 - exp(-10.0 * delta))
 	camera.fov = lerpf(camera.fov, 55.0 if aiming else 70.0, 1.0 - exp(-10.0 * delta))
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
-	model.animate_pose(delta, actual_speed, crouched, aiming)
+	var reloading := is_instance_valid(combat) and float(combat.get("reload_remaining")) > 0.0 and controls_enabled
+	model.animate_pose(delta, actual_speed, crouched, aiming, reloading)
 
 func update_camera_shoulder(delta: float) -> void:
 	# The spring arm handles rear clearance; independently check the lateral pivot.
@@ -281,6 +282,8 @@ func receive_damage(amount: int) -> void:
 		get_parent().get_node("Mission").call("agent_incapacitated")
 
 func play_cue(key: String) -> void:
+	if key == "fire" and is_instance_valid(model):
+		model.trigger_shot()
 	if is_instance_valid(event_audio):
 		event_audio.cue(key)
 

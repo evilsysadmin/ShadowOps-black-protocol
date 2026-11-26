@@ -18,7 +18,7 @@ func build_cue(key: String, duration: float, start_hz: float, end_hz: float, amp
 	var phase := 0.0
 	for i in range(frames):
 		var t := float(i) / float(frames)
-		var envelope := minf(1.0, t * 35.0) * pow(1.0 - t, 2.0)
+		var envelope := minf(1.0, t * 35.0) * (1.0 - t) * (1.0 - t)
 		phase += TAU * lerpf(start_hz, end_hz, t) / RATE
 		var sample := sin(phase) * envelope * amplitude
 		samples.encode_s16(i * 2, roundi(sample * 32767.0))

@@ -157,6 +157,15 @@ func run_regression() -> void:
 		check(is_instance_valid(combat), "field combat exists")
 		if is_instance_valid(combat):
 			check(int(combat.get("reserve")) == 16, "unselected utility rig inactive")
+			var mark: MeshInstance3D = combat.get("impact_mark")
+			check(is_instance_valid(mark) and mark.get_parent() == combat, "impact marker owned by combat node")
+		var visual: Node3D = agent.get("model")
+		visual.call("trigger_shot")
+		check(is_equal_approx(float(visual.get("shot_pose")), 1.0), "shot triggers visual pulse")
+		visual.call("animate_pose", 0.2, 0.0, false, true, false)
+		check(is_zero_approx(float(visual.get("shot_pose"))), "shot visual decays")
+		visual.call("animate_pose", 0.1, 0.0, false, true, true)
+		check(float(visual.get("reload_pose")) > 0.0, "reload visual blends")
 	var guard := hotel.get_node_or_null("Guard")
 	check(is_instance_valid(guard), "hotel guard exists")
 	if is_instance_valid(guard):

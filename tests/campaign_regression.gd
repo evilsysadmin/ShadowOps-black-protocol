@@ -19,6 +19,10 @@ func check(condition: bool, message: String) -> void:
 
 func run_regression() -> void:
 	var operations := preload("res://scripts/operation_catalog.gd")
+	var handler := preload("res://scripts/handler_dialogue.gd")
+	check(handler.relationship("share") != handler.relationship("retain"), "handler remembers decision")
+	check(handler.relationship("").contains("no field history"), "fresh relationship")
+	check(handler.assessment({}).contains("unavailable"), "no fabricated historical assessment")
 	check(operations.report_summary(false, {}) == "Not completed.", "pending operation report")
 	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
@@ -40,6 +44,7 @@ func run_regression() -> void:
 	check(not Campaign.record_intel("retain", {"seconds": -1}), "reject invalid field report")
 	check(Campaign.record_intel("retain", hotel_report), "record first mission")
 	check(Campaign.field_report("unexpected_guest") == hotel_report, "hotel performance stored")
+	check(handler.assessment(hotel_report).contains("No shots, no damage"), "grounded clean assessment")
 	check(operations.report_summary(true, hotel_report).contains("— accuracy"), "zero shots has no accuracy")
 	hotel_report["seconds"] = 999
 	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "report isolated from caller mutation")
@@ -47,6 +52,7 @@ func run_regression() -> void:
 	var archive_report := {"seconds": 80, "damage": 15, "shots": 4, "hits": 3, "alerted": true, "guard_down": true}
 	check(Campaign.record_archive(archive_report), "archive completion recorded")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive performance stored")
+	check(handler.assessment(archive_report).contains("full alert and you took damage"), "grounded alert assessment")
 	check(Campaign.record_archive({"seconds": 1}), "completed archive replay is ignored")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive replay preserves report")
 	check(Campaign.handler_trust() == -1 and Campaign.independent_leverage() == 1, "retain consequences")

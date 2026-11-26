@@ -33,13 +33,23 @@ func run_regression() -> void:
 	check(Campaign.select_deployment_kit("supplies"), "supplies kit accepted")
 	check(Campaign.kit_health_bonus() == 0 and Campaign.kit_reserve() == 40, "supplies kit values")
 	check(not FileAccess.file_exists("user://campaign.cfg"), "kit does not create campaign save")
-	check(Campaign.record_intel("retain"), "record first mission")
+	var hotel_report := {"seconds": 40, "damage": 0, "shots": 0, "hits": 0, "alerted": false, "guard_down": false}
+	check(not Campaign.record_intel("retain", {"seconds": -1}), "reject invalid field report")
+	check(Campaign.record_intel("retain", hotel_report), "record first mission")
+	check(Campaign.field_report("unexpected_guest") == hotel_report, "hotel performance stored")
+	hotel_report["seconds"] = 999
+	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "report isolated from caller mutation")
 	check(Campaign.select_operation("silent_archive"), "archive unlocked by hotel")
-	check(Campaign.record_archive(), "archive completion recorded")
+	var archive_report := {"seconds": 80, "damage": 15, "shots": 4, "hits": 3, "alerted": true, "guard_down": true}
+	check(Campaign.record_archive(archive_report), "archive completion recorded")
+	check(Campaign.field_report("silent_archive") == archive_report, "archive performance stored")
+	check(Campaign.record_archive({"seconds": 1}), "completed archive replay is ignored")
+	check(Campaign.field_report("silent_archive") == archive_report, "archive replay preserves report")
 	check(Campaign.handler_trust() == -1 and Campaign.independent_leverage() == 1, "retain consequences")
 	check(Campaign.has_skill_point(), "mission awards one skill point")
 	check(Campaign.record_intel("share"), "replay accepted")
 	check(Campaign.intel_choice == "retain", "replay preserves canonical decision")
+	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "replay preserves field report")
 	check(Campaign.choose_specialization("resilience"), "spend skill point")
 	check(not Campaign.has_skill_point(), "no additional point")
 	check(not Campaign.choose_specialization("mobility"), "second specialization rejected")
@@ -51,7 +61,9 @@ func run_regression() -> void:
 	Campaign.intel_choice = ""
 	Campaign.specialization = ""
 	Campaign.archive_completed = false
+	Campaign.field_reports.clear()
 	Campaign.load_campaign()
+	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")
 	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")
 	check(Campaign.select_deployment_kit("protection"), "select protection for field test")

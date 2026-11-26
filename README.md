@@ -53,7 +53,7 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Face one of the low brass-topped barriers on the left side of the hotel and press C within reach. Cover constrains movement along the surface, crouches unless aiming, and releases when the barrier ends or C is pressed again. Actual world collision still decides visibility and hit results; no artificial invulnerability. Check both ends and aim/exit transitions.
 
-- Mission debrief and failure show actual elapsed simulation time, health lost, fired shots, target-hit accuracy (including training targets), and guard alert/defeat. No performance-based rewards or permanent record yet.
+- Mission debrief and failure show actual elapsed simulation time, health lost, fired shots, target-hit accuracy (including training targets), and guard alert/defeat. The first canonical successful completion saves measured performance with the campaign decision or completion flag. Replays and failures do not overwrite it; older saves may have no report. No performance-based rewards yet.
 
 - Aim transitions blend smoothly with forward-facing arms; mouse sensitivity reduces while RMB is held. Check shoulder switching next to walls, including crouch and aim. Lateral pivot clearance is checked independently of the rear spring arm.
 

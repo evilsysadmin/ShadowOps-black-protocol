@@ -45,6 +45,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - The first recorded mission grants one persistent specialization point. At the debrief choose 3 (Resilience: +20 maximum health), 4 (Infiltration: faster crouched movement), or 5 (Mobility: faster sprint). Effects apply on next deployment. The choice is permanent for this prototype save, and replays do not grant additional points. Existing campaign records without a specialization receive the same unspent point. Check save/restart, double selection prevention, and actual effects.
 
+- Briefing allows Standard (24 reserve), Protection (+25 maximum health, 16 reserve), or Supplies (40 reserve). Kits are selected per deployment, never alter the campaign save, and combine with existing specialization. Verify that the safehouse has no kit bonus and that deployment HUD matches the chosen kit.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

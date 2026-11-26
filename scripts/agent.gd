@@ -42,6 +42,8 @@ func _ready() -> void:
 			crouch_speed = 1.65
 		"mobility":
 			sprint_speed = 6.4
+	if field_mode:
+		maximum_health += Campaign.kit_health_bonus()
 	health = maximum_health
 	var collider := CollisionShape3D.new()
 	var capsule := CapsuleShape3D.new()

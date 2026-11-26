@@ -19,6 +19,7 @@ var impact_time := 0.0
 
 func _ready() -> void:
 	agent = get_parent() as CharacterBody3D
+	reserve = Campaign.kit_reserve()
 	var hud := CanvasLayer.new()
 	hud.layer = 3
 	add_child(hud)

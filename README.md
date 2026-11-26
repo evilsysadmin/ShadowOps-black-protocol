@@ -65,6 +65,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Original synthesized audio cues accompany fired shots, confirmed hits, reload start, damage, objectives and failure. Cues are built once per field deployment, with bounded players and no external audio assets. Check audible feedback and volume during a real playtest; the safehouse remains silent for now.
 
+- Effects volume can be set from the briefing and saved explicitly (0% mutes new cues). Preferences use `user://settings.cfg`, separate from campaign progress. Failed writes are reported and leave the previous setting active.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

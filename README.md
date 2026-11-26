@@ -37,6 +37,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Check health HUD, alert reaction window, no damage behind solid obstacles, search timeout and replay restoring full health.
 
+- Check temporary impact marker, hit-confirmation reticle and red damage flash. These are provisional visual effects and must not intercept input.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

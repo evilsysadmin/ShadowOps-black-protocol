@@ -25,6 +25,8 @@ var crouched := false
 const MAX_HEALTH := 100
 var health := MAX_HEALTH
 var health_label: Label
+var damage_overlay: ColorRect
+var damage_flash := 0.0
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.12
 
@@ -74,6 +76,11 @@ func _ready() -> void:
 	health_label.offset_right = 220
 	health_label.add_theme_font_size_override("font_size", 22)
 	refresh_health()
+	damage_overlay = ColorRect.new()
+	damage_overlay.color = Color(0.75, 0.08, 0.06, 0.0)
+	damage_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(damage_overlay)
+	damage_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func build_model() -> void:
@@ -135,6 +142,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		pivot.rotation.x = clampf(pivot.rotation.x - event.relative.y * SENSITIVITY, -0.65, 0.55)
 
 func _physics_process(delta: float) -> void:
+	damage_flash = move_toward(damage_flash, 0.0, delta * 1.8)
+	damage_overlay.color.a = damage_flash
 	var axes := Vector2.ZERO
 	aiming = controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 	if controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -199,6 +208,7 @@ func receive_damage(amount: int) -> void:
 	if not controls_enabled or amount <= 0:
 		return
 	health = maxi(0, health - amount)
+	damage_flash = 0.30
 	refresh_health()
 	if health == 0:
 		get_parent().get_node("Mission").call("agent_incapacitated")

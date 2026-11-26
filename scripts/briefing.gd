@@ -58,7 +58,7 @@ func _ready() -> void:
 	refresh_agent_status()
 	if Campaign.has_skill_point():
 		build_specialization_row(panel)
-	add_line(panel, "FIELD CONTROLS\nWASD move · Ctrl crouch · C cover · Shift sprint · E interact\nRMB aim · LMB fire · R reload", 17, Color(0.68, 0.73, 0.76))
+	add_line(panel, "FIELD CONTROLS\nWASD move · Ctrl crouch · C cover · Shift sprint · E interact\nRMB aim · LMB fire · R reload · F distraction", 17, Color(0.68, 0.73, 0.76))
 	add_line(panel, "DEPLOYMENT KIT", 16, Color(0.75, 0.64, 0.43))
 	kit_selection = OptionButton.new()
 	kit_selection.add_item("Standard")

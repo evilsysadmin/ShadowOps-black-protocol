@@ -176,11 +176,13 @@ func run_regression() -> void:
 			check(guard_visual.get("elbows").size() == 2, "guard articulated elbows")
 		var guard_script = preload("res://scripts/guard.gd")
 		var probe = guard_script.new()
-		probe.begin_search(false)
+		check(probe.request_distraction(), "patrol accepts fictional distraction")
+		check(not probe.request_distraction(), "active investigation rejects repeated distraction")
 		probe.update_detection(0.1, false)
 		check(not probe.ever_alerted and probe.state == guard_script.GuardState.SUSPICIOUS, "curiosity does not instantly alert")
 		probe.update_detection(2.0, false)
 		check(probe.ever_alerted and probe.state == guard_script.GuardState.ALERT, "detection records alert immediately")
+		check(not probe.request_distraction() and probe.ever_alerted, "distraction cannot erase full alert")
 		probe.begin_search(true)
 		probe.update_detection(0.01, true)
 		check(probe.state == guard_script.GuardState.ALERT, "alerted search reacquires")
@@ -224,6 +226,7 @@ func run_regression() -> void:
 	if is_instance_valid(home_agent):
 		check(int(home_agent.get("maximum_health")) == 120, "kit not applied in safehouse")
 		check(home_agent.get("combat") == null, "safehouse combat disabled")
+		check(not bool(home_agent.call("use_distraction")), "safehouse distraction disabled")
 		var menu: CanvasLayer = home_agent.get("pause_menu")
 		check(is_instance_valid(menu), "pause menu exists")
 		if is_instance_valid(menu):
@@ -349,6 +352,9 @@ func check_relay_scene() -> void:
 		agent.set_physics_process(false)
 		guard.set_physics_process(false)
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
+		check(bool(agent.call("use_distraction")), "field distraction accepted by patrol")
+		check(not bool(agent.call("use_distraction")) and not bool(agent.get("distraction_available")), "single charge per deployment")
+		check(not bool(guard.get("ever_alerted")), "investigation is not confirmed alert")
 		check(is_equal_approx(float(agent.get("crouch_speed")), 1.5), "selected movement kit applies in field")
 		check(agent.position.is_equal_approx(relay_script.spawn_for(Campaign.relay_route())), "relay uses canonical entry")
 		await get_tree().physics_frame

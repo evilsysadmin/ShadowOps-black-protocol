@@ -19,6 +19,11 @@ var controls_enabled := true
 var combat: Node
 var aiming := false
 var boom: SpringArm3D
+var body_collider: CollisionShape3D
+var body_capsule: CapsuleShape3D
+var crouched := false
+const STAND_HEIGHT := 1.8
+const CROUCH_HEIGHT := 1.12
 
 func _ready() -> void:
 	var collider := CollisionShape3D.new()
@@ -27,6 +32,8 @@ func _ready() -> void:
 	capsule.height = 1.8
 	collider.shape = capsule
 	collider.position.y = 0.9
+	body_collider = collider
+	body_capsule = capsule
 	add_child(collider)
 	build_model()
 	pivot = Node3D.new()
@@ -52,7 +59,7 @@ func _ready() -> void:
 	add_child(hud)
 	var label := Label.new()
 	label.position = Vector2(24, 22)
-	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Q shoulder · E interact\nRMB aim · LMB fire · Esc release"
+	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · Q shoulder · E interact\nRMB aim · LMB fire · Esc release"
 	hud.add_child(label)
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -120,8 +127,9 @@ func _physics_process(delta: float) -> void:
 			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
 			float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
 		).limit_length()
-	var sprint := Input.is_physical_key_pressed(KEY_SHIFT)
-	var speed := 2.0 if aiming else (RUN_SPEED if sprint else WALK_SPEED)
+	update_stance(controls_enabled and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and Input.is_physical_key_pressed(KEY_CTRL), delta)
+	var sprint := Input.is_physical_key_pressed(KEY_SHIFT) and not crouched
+	var speed := 1.25 if crouched else (2.0 if aiming else (RUN_SPEED if sprint else WALK_SPEED))
 	var direction := transform.basis * Vector3(axes.x, 0, axes.y)
 	velocity.x = move_toward(velocity.x, direction.x * speed, ACCELERATION * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, ACCELERATION * delta)
@@ -147,3 +155,31 @@ func _physics_process(delta: float) -> void:
 	if aiming:
 		arms[1].rotation.x = -1.35
 	model.position.y = absf(sin(phase)) * stride * 0.035
+
+func update_stance(want_crouch: bool, delta: float) -> void:
+	if want_crouch:
+		crouched = true
+	elif crouched and can_stand():
+		crouched = false
+	var height := CROUCH_HEIGHT if crouched else STAND_HEIGHT
+	if not is_equal_approx(body_capsule.height, height):
+		body_capsule.height = height
+		body_collider.position.y = height * 0.5
+	var blend := 1.0 - exp(-12.0 * delta)
+	model.scale.y = lerpf(model.scale.y, 0.64 if crouched else 1.0, blend)
+	pivot.position.y = lerpf(pivot.position.y, 1.02 if crouched else 1.63, blend)
+
+func can_stand() -> bool:
+	var shape := CapsuleShape3D.new()
+	shape.radius = body_capsule.radius
+	shape.height = STAND_HEIGHT - CROUCH_HEIGHT + shape.radius * 2.0
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = shape
+	query.transform = Transform3D(Basis.IDENTITY, global_position + Vector3(0, (STAND_HEIGHT + CROUCH_HEIGHT) * 0.5 - shape.radius, 0))
+	query.exclude = [get_rid()]
+	query.collision_mask = collision_mask
+	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+func eye_height() -> float:
+	return 0.88 if crouched else 1.45
+

@@ -14,7 +14,7 @@ godot --path .
 godot -e --path .
 ```
 
-Controls: WASD/arrows, Shift sprint, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, mouse look, Esc releases the pointer, left click recaptures it.
+Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, Q switch shoulder, E interact, RMB aim, LMB fire while aiming, mouse look, Esc releases the pointer, left click recaptures it.
 
 ## Local startup gate
 
@@ -30,6 +30,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Check training target hit feedback and that solid obstacles block shots.
 - Guard patrols; suspicion rises with visible player and falls when line of sight breaks. Detection ends the mission; R retries. Guard can be defeated using the test combat system.
+
+- Hold Ctrl to crouch: lower collision capsule, camera and movement speed; release to stand when space permits. Crouching reduces guard visual detection, not invisibility. Check crouched aiming and interaction.
 
 ## Development policy
 

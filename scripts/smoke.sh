@@ -41,6 +41,7 @@ run_checked --headless --path . res://scenes/contact.tscn --quit-after 120
 run_checked --headless --path . res://scenes/armory.tscn --quit-after 120
 run_checked --headless --path . res://scenes/hotel.tscn --quit-after 120
 run_checked --headless --path . res://scenes/archive.tscn --quit-after 120
+run_checked --headless --path . res://scenes/relay.tscn --quit-after 120
 run_checked --headless --path . res://tests/campaign_regression.tscn --quit-after 300
 if ! grep -Fxq "CAMPAIGN REGRESSION PASSED" "$log"; then
   echo "Campaign regression did not finish successfully." >&2

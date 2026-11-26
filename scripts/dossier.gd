@@ -11,12 +11,16 @@ func _ready() -> void:
 	backdrop.color = Color(0.055, 0.085, 0.10)
 	add_child(backdrop)
 	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var scroll := ScrollContainer.new()
+	add_child(scroll)
+	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var center := CenterContainer.new()
-	add_child(center)
-	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.add_child(center)
 	var panel := VBoxContainer.new()
 	panel.custom_minimum_size.x = 630
-	panel.add_theme_constant_override("separation", 10)
+	panel.add_theme_constant_override("separation", 7)
 	center.add_child(panel)
 	line(panel, "SHADOWOPS / CLASSIFIED FIELD RECORDS", 18, Color(0.50, 0.80, 0.75))
 	line(panel, "AGENT DOSSIER", 36, Color(0.94, 0.94, 0.90))
@@ -26,7 +30,7 @@ func _ready() -> void:
 		line(panel, "Campaign file unavailable or incompatible.", 18, Color(1.0, 0.5, 0.4))
 	line(panel, "HANDLER / SECURE MESSAGE", 17, Color(0.50, 0.80, 0.75))
 	line(panel, Handler.relationship(Campaign.intel_choice), 18, Color(0.85, 0.89, 0.89))
-	for operation in [Operations.HOTEL, Operations.ARCHIVE]:
+	for operation in [Operations.HOTEL, Operations.ARCHIVE, Operations.RELAY]:
 		var completed := Campaign.operation_completed(operation)
 		line(panel, Operations.title_for(operation), 24, Color(0.75, 0.64, 0.43))
 		if not Campaign.available_operations().has(operation):

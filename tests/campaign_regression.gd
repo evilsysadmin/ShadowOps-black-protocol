@@ -45,6 +45,7 @@ func run_regression() -> void:
 	check(Campaign.rook_reputation() == 0 and Campaign.rook_relationship() == "No access", "fresh Rook relationship")
 	check(not Campaign.negotiate_handler("coordinate"), "negotiation locked before first operation")
 	check(not Campaign.select_operation("silent_archive"), "archive locked initially")
+	check(not Campaign.select_operation("night_relay") and not Campaign.record_relay({}), "relay locked initially")
 	check(not Campaign.record_archive(), "archive cannot complete before hotel")
 	check(not Campaign.has_skill_point(), "fresh campaign has no skill point")
 	check(not Campaign.choose_specialization("resilience"), "no premature specialization")
@@ -81,6 +82,7 @@ func run_regression() -> void:
 	check(not Campaign.accept_rook_contract() and Campaign.rook_contract_reward() == 0, "contract cannot repeat or prepay")
 	var archive_report := {"seconds": 80, "damage": 15, "shots": 4, "hits": 3, "alerted": true, "guard_down": true}
 	check(Campaign.record_archive(archive_report), "archive completion recorded")
+	check(Campaign.available_operations().has("night_relay") and Campaign.relay_route() == "independent", "failed contract unlocks independent relay")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive performance stored")
 	check(handler.assessment(archive_report).contains("full alert and you took damage"), "grounded alert assessment")
 	check(Campaign.record_archive({"seconds": 1}), "completed archive replay is ignored")
@@ -217,6 +219,7 @@ func run_regression() -> void:
 		check(GameSettings.save_effects_volume(1.5) and is_equal_approx(GameSettings.effects_volume, 1.0), "volume clamped")
 	safehouse.queue_free()
 	await get_tree().process_frame
+	await check_relay_scene()
 	check_contract_branches()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures == 0:
@@ -273,13 +276,20 @@ func check_contract_branches() -> void:
 	check(official.record_archive(clean), "official archive completion")
 	check(official.handler_contract_reward() == 30 and official.earned_credits() == 390 and official.handler_trust() == 0, "official reward and trust settle once")
 	check(official.record_archive(clean) and official.earned_credits() == 390, "official replay cannot farm reward")
+	check(official.relay_route() == "handler", "fulfilled official contract unlocks west route")
 	var reloaded := preload("res://scripts/campaign.gd").new()
 	reloaded.load_campaign()
 	check(reloaded.handler_contract_accepted and reloaded.earned_credits() == 390 and not reloaded.save_blocked, "official settlement survives reload")
+	check(reloaded.record_relay(clean) and reloaded.earned_credits() == 570, "relay completion rewarded once")
+	check(reloaded.record_relay(clean) and reloaded.earned_credits() == 570, "relay replay cannot farm")
+	reloaded.field_reports.clear()
+	reloaded.load_campaign()
+	check(reloaded.operation_completed("night_relay") and reloaded.earned_credits() == 570 and not reloaded.save_blocked, "relay survives reload")
 	var rook := preload("res://scripts/campaign.gd").new()
 	check(rook.record_intel("retain", clean) and rook.accept_rook_contract(), "new Rook terms accepted")
 	check(rook.record_archive(clean), "Rook archive completion")
 	check(rook.earned_credits() == 395 and rook.handler_trust() == -2 and rook.rook_reputation() == 1, "Rook reward and trust cost settle")
+	check(rook.relay_route() == "rook", "fulfilled Rook contract unlocks east route")
 	var legacy := ConfigFile.new()
 	check(legacy.load("user://campaign.cfg") == OK, "load Rook save")
 	legacy.erase_section_key("contacts", "rook_trust_penalty_enabled")
@@ -298,3 +308,28 @@ func check_contract_branches() -> void:
 	rook.free()
 	old_terms.free()
 	invalid.free()
+
+func check_relay_scene() -> void:
+	var relay_script = preload("res://scripts/relay.gd")
+	check(relay_script.spawn_for("handler") != relay_script.spawn_for("rook"), "sponsor entrances differ")
+	check(relay_script.spawn_for("independent") != relay_script.spawn_for("rook"), "independent entrance differs")
+	var relay: Node = preload("res://scenes/relay.tscn").instantiate()
+	add_child(relay)
+	var agent := relay.get_node_or_null("Agent") as CharacterBody3D
+	var mission := relay.get_node_or_null("Mission")
+	var guard := relay.get_node_or_null("Guard")
+	check(is_instance_valid(agent) and is_instance_valid(mission) and is_instance_valid(guard), "relay entities exist")
+	if is_instance_valid(agent) and is_instance_valid(mission) and is_instance_valid(guard):
+		agent.set_physics_process(false)
+		guard.set_physics_process(false)
+		check(mission.get("operation_id") == "night_relay", "relay mission identity")
+		check(agent.position.is_equal_approx(relay_script.spawn_for(Campaign.relay_route())), "relay uses canonical entry")
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		check(bool(mission.call("can_reach", mission.get("exit_point"))), "relay extraction reachable")
+		agent.global_position = Vector3(0, 0.05, -7.1)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		check(bool(mission.call("can_reach", mission.get("intel_point"))), "relay drive reachable")
+	relay.queue_free()
+	await get_tree().process_frame

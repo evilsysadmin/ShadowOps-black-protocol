@@ -89,6 +89,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - The handler offers an exclusive alternative to Rook before the first Silent Archive completion: no damage for 30 credits and +1 trust. Accepting either contract blocks the other permanently. A successful Rook contract also costs one handler trust point, disclosed at acceptance. Both settle from canonical reports; old saves retain existing acceptance and Rook contracts without recorded penalty terms retain their original no-penalty terms. No retroactive reward. The debrief and dossier show canonical contract settlement; replay debriefs label it archived. Regression covers both successful sponsors, legacy terms and invalid dual acceptance.
 
+- Night Relay unlocks after Silent Archive. A fulfilled official contract grants west entry; fulfilled Rook contract grants east entry; otherwise the south entry is used. Recover the relay drive and extract at the original entry. The third operation has distinct procedural geometry, a patrol and cover, canonical field report and one-time performance rewards. Local smoke includes the scene; regressions cover all route outcomes, independent entry reachability, persistence and replay protection.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

@@ -32,7 +32,7 @@ var interact_requested := false
 func _ready() -> void:
 	player = get_parent().get_node("Agent") as CharacterBody3D
 	campaign_replay = Campaign.operation_completed(operation_id)
-	intel = marker(intel_point, "LEDGER" if operation_id == Operations.ARCHIVE else "INTEL", Color(0.28, 0.85, 0.78), false)
+	intel = marker(intel_point, "DRIVE" if operation_id == Operations.RELAY else ("LEDGER" if operation_id == Operations.ARCHIVE else "INTEL"), Color(0.28, 0.85, 0.78), false)
 	exit = marker(exit_point, "EXTRACTION", Color(0.93, 0.72, 0.31), true)
 	exit.hide()
 	var hud := CanvasLayer.new()
@@ -96,7 +96,12 @@ func _ready() -> void:
 	radio_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	radio_label.add_theme_constant_override("shadow_offset_x", 2)
 	radio_label.add_theme_constant_override("shadow_offset_y", 2)
-	show_radio(Handler.deployment_message(operation_id == Operations.ARCHIVE, Campaign.intel_choice))
+	if operation_id == Operations.RELAY:
+		var route := Campaign.relay_route()
+		var sender := "HANDLER" if route == "handler" else ("ROOK" if route == "rook" else "AGENT")
+		show_radio(sender + " / Locate the relay drive and return to the entry point.")
+	else:
+		show_radio(Handler.deployment_message(operation_id == Operations.ARCHIVE, Campaign.intel_choice))
 	refresh_objective()
 
 func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node3D:
@@ -161,17 +166,20 @@ func _physics_process(delta: float) -> void:
 	var reachable := can_reach(target)
 	prompt.text = ""
 	if reachable:
-		prompt.text = ("[E] Recover ledger" if operation_id == Operations.ARCHIVE else "[E] Recover intel") if stage == Stage.RECOVER else "[E] Extract"
+		prompt.text = ("[E] Recover drive" if operation_id == Operations.RELAY else ("[E] Recover ledger" if operation_id == Operations.ARCHIVE else "[E] Recover intel")) if stage == Stage.RECOVER else "[E] Extract"
 	if interact_requested and reachable and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		player.call("play_cue", "objective")
 		if stage == Stage.RECOVER:
 			stage = Stage.EXTRACT
-			show_radio(Handler.recovered_message(operation_id == Operations.ARCHIVE, Campaign.intel_choice))
+			show_radio("AGENT / Relay drive secured. Return to extraction." if operation_id == Operations.RELAY else Handler.recovered_message(operation_id == Operations.ARCHIVE, Campaign.intel_choice))
 			intel.hide()
 			exit.show()
 		else:
 			final_field_report = measure_field_report()
-			if operation_id == Operations.ARCHIVE:
+			if operation_id == Operations.RELAY:
+				record_failed = not Campaign.record_relay(final_field_report)
+				stage = Stage.COMPLETE
+			elif operation_id == Operations.ARCHIVE:
 				record_failed = not Campaign.record_archive(final_field_report)
 				stage = Stage.COMPLETE
 			else:
@@ -226,9 +234,9 @@ func refresh_objective() -> void:
 		refresh_report()
 	match stage:
 		Stage.RECOVER:
-			objective.text = "OPERATION: SILENT ARCHIVE | Recover the ledger" if operation_id == Operations.ARCHIVE else "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
+			objective.text = "OPERATION: NIGHT RELAY | Recover the drive" if operation_id == Operations.RELAY else ("OPERATION: SILENT ARCHIVE | Recover the ledger" if operation_id == Operations.ARCHIVE else "OPERATION: UNEXPECTED GUEST | Recover the intel at reception")
 		Stage.EXTRACT:
-			objective.text = "LEDGER SECURED | Return to extraction" if operation_id == Operations.ARCHIVE else "INTEL SECURED | Return to the starting area"
+			objective.text = "DRIVE SECURED | Return to extraction" if operation_id == Operations.RELAY else ("LEDGER SECURED | Return to extraction" if operation_id == Operations.ARCHIVE else "INTEL SECURED | Return to the starting area")
 		Stage.DEBRIEF:
 			objective.text = "EXTRACTION COMPLETE | Incoming secure transmission"
 			prompt.text = "Choose who controls the information"
@@ -237,7 +245,7 @@ func refresh_objective() -> void:
 				decision_label.text += "\nReplay — campaign decision will not change"
 			decision_label.show()
 		Stage.COMPLETE:
-			objective.text = "OPERATION COMPLETE | Ledger recovered" if operation_id == Operations.ARCHIVE else "OPERATION COMPLETE | Intel recovered and agent extracted"
+			objective.text = "OPERATION COMPLETE | Relay drive recovered" if operation_id == Operations.RELAY else ("OPERATION COMPLETE | Ledger recovered" if operation_id == Operations.ARCHIVE else "OPERATION COMPLETE | Intel recovered and agent extracted")
 			if record_failed:
 				decision_label.text = "Operation complete locally — campaign save unavailable"
 			else:

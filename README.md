@@ -71,6 +71,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - A separate FIELD RECORDS terminal in the safehouse opens the agent dossier with canonical mission reports, reputation and specialization. Locked, pending and legacy completions are distinct; no missing metrics are invented. Esc or the return button closes the dossier.
 
+- The dossier contains deterministic handler messages based on the canonical intel decision and actual recorded operation metrics. Missing historical data receives a neutral message. No new reputation changes or invented incidents.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

@@ -10,8 +10,9 @@ var decision_label: Label
 var report_label: Label
 var elapsed_seconds := 0.0
 
-const INTEL_POINT := Vector3(-3.65, 1.38, -3.92)
-const EXIT_POINT := Vector3(0, 0.65, 9)
+var intel_point := Vector3(-3.65, 1.38, -3.92)
+var exit_point := Vector3(0, 0.65, 9)
+var archive_operation := false
 const REACH := 1.85
 var stage: Stage = Stage.RECOVER
 var player: CharacterBody3D
@@ -23,9 +24,9 @@ var interact_requested := false
 
 func _ready() -> void:
 	player = get_parent().get_node("Agent") as CharacterBody3D
-	campaign_replay = not Campaign.intel_choice.is_empty()
-	intel = marker(INTEL_POINT, "INTEL", Color(0.28, 0.85, 0.78), false)
-	exit = marker(EXIT_POINT, "EXTRACTION", Color(0.93, 0.72, 0.31), true)
+	campaign_replay = Campaign.archive_completed if archive_operation else not Campaign.intel_choice.is_empty()
+	intel = marker(intel_point, "LEDGER" if archive_operation else "INTEL", Color(0.28, 0.85, 0.78), false)
+	exit = marker(exit_point, "EXTRACTION", Color(0.93, 0.72, 0.31), true)
 	exit.hide()
 	var hud := CanvasLayer.new()
 	hud.layer = 2
@@ -132,18 +133,22 @@ func _physics_process(delta: float) -> void:
 		interact_requested = false
 		return
 	elapsed_seconds += delta
-	var target := INTEL_POINT if stage == Stage.RECOVER else EXIT_POINT
+	var target := intel_point if stage == Stage.RECOVER else exit_point
 	var reachable := can_reach(target)
 	prompt.text = ""
 	if reachable:
-		prompt.text = "[E] Recover intel" if stage == Stage.RECOVER else "[E] Extract"
+		prompt.text = ("[E] Recover ledger" if archive_operation else "[E] Recover intel") if stage == Stage.RECOVER else "[E] Extract"
 	if interact_requested and reachable and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		if stage == Stage.RECOVER:
 			stage = Stage.EXTRACT
 			intel.hide()
 			exit.show()
 		else:
-			stage = Stage.DEBRIEF
+			if archive_operation:
+				record_failed = not Campaign.record_archive()
+				stage = Stage.COMPLETE
+			else:
+				stage = Stage.DEBRIEF
 			player.set("controls_enabled", false)
 			exit.hide()
 			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -192,9 +197,9 @@ func refresh_objective() -> void:
 		refresh_report()
 	match stage:
 		Stage.RECOVER:
-			objective.text = "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
+			objective.text = "OPERATION: SILENT ARCHIVE | Recover the ledger" if archive_operation else "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
 		Stage.EXTRACT:
-			objective.text = "INTEL SECURED | Return to the starting area"
+			objective.text = "LEDGER SECURED | Return to extraction" if archive_operation else "INTEL SECURED | Return to the starting area"
 		Stage.DEBRIEF:
 			objective.text = "EXTRACTION COMPLETE | Incoming secure transmission"
 			prompt.text = "Choose who controls the information"
@@ -203,13 +208,13 @@ func refresh_objective() -> void:
 				decision_label.text += "\nReplay — campaign decision will not change"
 			decision_label.show()
 		Stage.COMPLETE:
-			objective.text = "OPERATION COMPLETE | Intel recovered and agent extracted"
+			objective.text = "OPERATION COMPLETE | Ledger recovered" if archive_operation else "OPERATION COMPLETE | Intel recovered and agent extracted"
 			if record_failed:
-				decision_label.text = "Choice made locally — campaign save unavailable"
+				decision_label.text = "Operation complete locally — campaign save unavailable"
 			else:
 				decision_label.text = "CAMPAIGN | HANDLER TRUST  %+d   |   LEVERAGE  %+d" % [Campaign.handler_trust(), Campaign.independent_leverage()]
 				if campaign_replay:
-					decision_label.text += "\nReplay choice not recorded; original decision preserved"
+					decision_label.text += "\nReplay — original campaign record preserved"
 			if Campaign.has_skill_point():
 				decision_label.text += "\n\n1 skill point — choose your specialization:\n[3] Resilience (+20 health)  [4] Infiltration (faster crouch)\n[5] Mobility (faster sprint)"
 				if specialization_save_failed:

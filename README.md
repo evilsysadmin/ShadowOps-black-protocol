@@ -20,7 +20,7 @@ Controls: WASD/arrows, Shift sprint, Ctrl hold to crouch, C toggle low cover, Q 
 
 `bash scripts/static-check.sh` runs a narrow syntax sanity check without Godot. The smoke runner invokes it before importing the project. It is not a GDScript parser.
 
-Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing and hotel, failing even on logged script errors with a zero engine exit code. It also runs a campaign/equipment regression scene, with temporary Linux XDG directories so your real campaign is not touched. The test verifies canonical decisions, skill-point limits, persistence, kit isolation, and actual initial agent/combat stats in the hotel and safehouse, plus entering, toggling and leaving physical cover. It does not replace interactive playtesting.
+Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` if the engine is not on PATH. The gate imports the project and runs a short headless startup of the safehouse, briefing, hotel and archive, failing even on logged script errors with a zero engine exit code. It also runs a campaign/equipment regression scene, with temporary Linux XDG directories so your real campaign is not touched. The test verifies canonical decisions, skill-point limits, persistence, kit isolation, and actual initial agent/combat stats in the hotel and safehouse, plus entering, toggling and leaving physical cover. It does not replace interactive playtesting.
 
 ## Local smoke checklist
 
@@ -61,7 +61,7 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 ## Operation catalog
 
-The first operation is now described through a shared catalog. A second operation, Silent Archive, has a prerequisite and branch-specific briefing defined, but is not exposed for deployment until its scene is implemented.
+The first operation is now described through a shared catalog. Silent Archive unlocks after the canonical hotel debrief. Select it at the briefing terminal; recover the ledger and return to extraction. Sharing the hotel file opens a closer starting position; retaining it starts at the far entrance. Archive completion persists independently of the first decision and specialization. Both operations remain replayable. The archive environment is procedural and provisional.
 
 ## Development policy
 

@@ -75,7 +75,7 @@ func build_reception() -> void:
 	box(Vector3(-3.95, 1.22, -4.8), Vector3(0.38, 0.05, 0.26), DARK, false)
 	box(Vector3(-3.95, 1.43, -4.9), Vector3(0.48, 0.31, 0.06), DARK, false)
 	box(Vector3(-3.95, 1.43, -4.86), Vector3(0.43, 0.26, 0.018), Color(0.20, 0.49, 0.47), false, true)
-	sign("RECEPTION", Vector3(-3.65, 2.38, -6.4), 50)
+	add_hotel_sign("RECEPTION", Vector3(-3.65, 2.38, -6.4), 50)
 	box(Vector3(-3.65, 1.7, -6.65), Vector3(3.4, 3.4, 0.20), WOOD)
 	for x in [-4.8, -3.65, -2.5]:
 		box(Vector3(x, 1.4, -6.51), Vector3(0.022, 1.8, 0.04), BRASS, false)
@@ -99,10 +99,10 @@ func build_corridor() -> void:
 		box(Vector3(side * 3.9, 2.1, -8.8), Vector3(3.8, 4.2, 0.30), WOOD)
 		box(Vector3(side * 1.94, 1.5, -8.8), Vector3(0.14, 3.0, 0.46), BRASS, false)
 	box(Vector3(0, 3.6, -8.8), Vector3(4.0, 1.2, 0.30), WOOD)
-	sign("GUEST ROOMS", Vector3(0, 3.54, -8.61), 52)
+	add_hotel_sign("GUEST ROOMS", Vector3(0, 3.54, -8.61), 52)
 	box(Vector3(0, 1.12, -11.82), Vector3(1.8, 2.24, 0.10), DARK)
 	box(Vector3(0, 1.12, -11.74), Vector3(0.04, 2.24, 0.03), BRASS, false)
-	sign("01  /  PRIVATE", Vector3(0, 2.48, -11.68), 34)
+	add_hotel_sign("01  /  PRIVATE", Vector3(0, 2.48, -11.68), 34)
 	lamp(Vector3(0, 2.8, -10.3), 4.5, 2.2)
 
 func plant(at: Vector3) -> void:
@@ -168,7 +168,7 @@ func lamp(at: Vector3, radius: float, energy: float, shadows := false) -> void:
 	light.shadow_enabled = shadows
 	add_child(light)
 
-func sign(message: String, at: Vector3, size: int) -> void:
+func add_hotel_sign(message: String, at: Vector3, size: int) -> void:
 	var label := Label3D.new()
 	label.text = message
 	label.position = at

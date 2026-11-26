@@ -9,6 +9,7 @@ var specialization_save_failed := false
 var decision_label: Label
 var report_label: Label
 var elapsed_seconds := 0.0
+var final_field_report: Dictionary = {}
 
 var intel_point := Vector3(-3.65, 1.38, -3.92)
 var exit_point := Vector3(0, 0.65, 9)
@@ -145,8 +146,9 @@ func _physics_process(delta: float) -> void:
 			intel.hide()
 			exit.show()
 		else:
+			final_field_report = measure_field_report()
 			if archive_operation:
-				record_failed = not Campaign.record_archive()
+				record_failed = not Campaign.record_archive(final_field_report)
 				stage = Stage.COMPLETE
 			else:
 				stage = Stage.DEBRIEF
@@ -168,7 +170,7 @@ func resolve_intel(choice: IntelDecision) -> void:
 		key = "retain"
 	else:
 		return
-	if not campaign_replay and not Campaign.record_intel(key):
+	if not campaign_replay and not Campaign.record_intel(key, final_field_report):
 		record_failed = true
 	intel_decision = choice
 	stage = Stage.COMPLETE
@@ -228,6 +230,20 @@ func refresh_objective() -> void:
 		Stage.FAILED:
 			objective.text = "OPERATION FAILED | Agent incapacitated"
 			prompt.text = "Compromised — press R to return to safehouse"
+
+func measure_field_report() -> Dictionary:
+	var combat: Node = player.get("combat")
+	var guard := get_parent().get_node_or_null("Guard")
+	if not is_instance_valid(guard) or not is_instance_valid(combat):
+		return {}
+	return {
+		"seconds": int(elapsed_seconds),
+		"damage": maxi(0, int(player.get("maximum_health")) - int(player.get("health"))),
+		"shots": int(combat.get("shots_fired")),
+		"hits": int(combat.get("target_hits")),
+		"alerted": bool(guard.get("ever_alerted")),
+		"guard_down": int(guard.get("health")) <= 0
+	}
 
 func refresh_report() -> void:
 	var combat: Node = player.get("combat")

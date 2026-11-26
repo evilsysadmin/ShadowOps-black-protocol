@@ -6,6 +6,7 @@ const SCHEMA := 1
 const MISSION_ID := "unexpected_guest"
 var intel_choice := ""
 var archive_completed := false
+var field_reports: Dictionary = {}
 var specialization := ""
 const SPECIALIZATIONS := ["resilience", "infiltration", "mobility"]
 var save_blocked := false
@@ -32,16 +33,28 @@ func load_campaign() -> void:
 	if not archive is bool or (archive and saved == ""):
 		save_blocked = true
 		return
+	var reports: Variant = config.get_value("missions", "field_reports", {})
+	if not reports is Dictionary:
+		save_blocked = true
+		return
+	for operation in reports:
+		if (operation != MISSION_ID and operation != "silent_archive") or (operation == MISSION_ID and saved == "") or (operation == "silent_archive" and not archive) or not valid_field_report(reports[operation]):
+			save_blocked = true
+			return
+	field_reports = reports.duplicate(true)
 	archive_completed = archive
 	intel_choice = saved
 	specialization = saved_skill
 
-func record_intel(choice: String) -> bool:
+func record_intel(choice: String, report: Dictionary = {}) -> bool:
 	if not choice in ["share", "retain"] or save_blocked:
 		return false
 	if not intel_choice.is_empty():
 		return true
-	return write_campaign(choice, specialization, archive_completed)
+	var reports := reports_with(MISSION_ID, report)
+	if not report.is_empty() and reports.is_empty():
+		return false
+	return write_campaign(choice, specialization, archive_completed, reports)
 
 func has_skill_point() -> bool:
 	return not save_blocked and not intel_choice.is_empty() and specialization.is_empty()
@@ -49,13 +62,14 @@ func has_skill_point() -> bool:
 func choose_specialization(value: String) -> bool:
 	if not has_skill_point() or not SPECIALIZATIONS.has(value):
 		return false
-	return write_campaign(intel_choice, value, archive_completed)
+	return write_campaign(intel_choice, value, archive_completed, field_reports)
 
-func write_campaign(choice: String, skill: String, completed_archive: bool) -> bool:
+func write_campaign(choice: String, skill: String, completed_archive: bool, reports: Dictionary) -> bool:
 	var config := ConfigFile.new()
 	config.set_value("meta", "schema", SCHEMA)
 	config.set_value("missions", MISSION_ID, choice)
 	config.set_value("missions", "silent_archive", completed_archive)
+	config.set_value("missions", "field_reports", reports)
 	config.set_value("progression", "specialization", skill)
 	if config.save(TEMP_PATH) != OK:
 		return false
@@ -64,14 +78,41 @@ func write_campaign(choice: String, skill: String, completed_archive: bool) -> b
 	intel_choice = choice
 	specialization = skill
 	archive_completed = completed_archive
+	field_reports = reports.duplicate(true)
 	return true
 
-func record_archive() -> bool:
+func record_archive(report: Dictionary = {}) -> bool:
 	if save_blocked or intel_choice.is_empty():
 		return false
 	if archive_completed:
 		return true
-	return write_campaign(intel_choice, specialization, true)
+	var reports := reports_with("silent_archive", report)
+	if not report.is_empty() and reports.is_empty():
+		return false
+	return write_campaign(intel_choice, specialization, true, reports)
+
+func valid_field_report(value: Variant) -> bool:
+	if not value is Dictionary or value.size() != 6:
+		return false
+	for key in ["seconds", "damage", "shots", "hits"]:
+		var number: Variant = value.get(key)
+		if not number is int or number < 0:
+			return false
+	if value["hits"] > value["shots"]:
+		return false
+	return value.get("alerted") is bool and value.get("guard_down") is bool
+
+func reports_with(operation: String, report: Dictionary) -> Dictionary:
+	var reports := field_reports.duplicate(true)
+	if not report.is_empty():
+		if not valid_field_report(report):
+			return {}
+		reports[operation] = report.duplicate(true)
+	return reports
+
+func field_report(operation: String) -> Dictionary:
+	var report: Dictionary = field_reports.get(operation, {})
+	return report.duplicate(true)
 
 func handler_trust() -> int:
 	match intel_choice:

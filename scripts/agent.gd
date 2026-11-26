@@ -151,6 +151,9 @@ func _physics_process(delta: float) -> void:
 	var direction := transform.basis * Vector3(axes.x, 0, axes.y)
 	if cover_active:
 		direction = direction.slide(cover_normal)
+		var lateral_velocity := Vector3(velocity.x, 0, velocity.z).slide(cover_normal)
+		velocity.x = lateral_velocity.x
+		velocity.z = lateral_velocity.z
 		speed = minf(speed, 1.65)
 	velocity.x = move_toward(velocity.x, direction.x * speed, ACCELERATION * delta)
 	velocity.z = move_toward(velocity.z, direction.z * speed, ACCELERATION * delta)
@@ -163,8 +166,9 @@ func _physics_process(delta: float) -> void:
 		leave_cover()
 	if aiming:
 		model.rotation.y = lerp_angle(model.rotation.y, 0.0, 1.0 - exp(-14.0 * delta))
-	elif axes.length_squared() > 0.01:
-		model.rotation.y = lerp_angle(model.rotation.y, atan2(-axes.x, -axes.y), 1.0 - exp(-12.0 * delta))
+	elif direction.length_squared() > 0.01:
+		var local_direction := transform.basis.inverse() * direction
+		model.rotation.y = lerp_angle(model.rotation.y, atan2(-local_direction.x, -local_direction.z), 1.0 - exp(-12.0 * delta))
 	pivot.position.x = lerpf(pivot.position.x, shoulder * 0.62, 1.0 - exp(-10.0 * delta))
 	boom.spring_length = lerpf(boom.spring_length, 1.9 if aiming else 2.65, 1.0 - exp(-10.0 * delta))
 	camera.fov = lerpf(camera.fov, 55.0 if aiming else 70.0, 1.0 - exp(-10.0 * delta))

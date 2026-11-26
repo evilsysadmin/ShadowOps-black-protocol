@@ -55,7 +55,7 @@ func fire() -> void:
 	var space := agent.get_world_3d().direct_space_state
 	var hit := space.intersect_ray(query)
 	var aim_point: Vector3 = hit.get("position", endpoint)
-	var muzzle := agent.global_position + Vector3(0, 1.45, 0)
+	var muzzle := agent.global_position + Vector3(0, float(agent.call("eye_height")), 0)
 	# Resolve from the character as well, so the camera cannot fire through cover.
 	var shot := PhysicsRayQueryParameters3D.create(muzzle, aim_point + (aim_point - muzzle).normalized() * 0.05)
 	shot.exclude = [agent.get_rid()]

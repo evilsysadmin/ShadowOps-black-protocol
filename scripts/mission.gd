@@ -108,7 +108,7 @@ func guard_detected() -> void:
 	refresh_objective()
 
 func can_reach(target: Vector3) -> bool:
-	var origin := player.global_position + Vector3(0, 1.2, 0)
+	var origin := player.global_position + Vector3(0, float(player.call("eye_height")), 0)
 	if origin.distance_to(target) > REACH:
 		return false
 	var query := PhysicsRayQueryParameters3D.create(origin, target)

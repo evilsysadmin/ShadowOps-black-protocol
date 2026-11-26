@@ -56,7 +56,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector3.ZERO
 		return
 	if sees_player():
-		suspicion = minf(1.0, suspicion + delta * 0.55)
+		suspicion = minf(1.0, suspicion + delta * (0.24 if bool(player.get("crouched")) else 0.55))
 		velocity.x = 0.0
 		velocity.z = 0.0
 		var direction := player.global_position - global_position
@@ -97,9 +97,10 @@ func patrol(delta: float) -> void:
 
 func sees_player() -> bool:
 	var origin := global_position + Vector3(0, 1.65, 0)
-	var target := player.global_position + Vector3(0, 1.2, 0)
+	var target := player.global_position + Vector3(0, float(player.call("eye_height")), 0)
 	var offset := target - origin
-	if offset.length() > 5.5:
+	var sight_range := 3.8 if bool(player.get("crouched")) else 5.5
+	if offset.length() > sight_range:
 		return false
 	var horizontal := Vector3(offset.x, 0, offset.z)
 	if horizontal.length() > 0.65 and facing.dot(horizontal.normalized()) < 0.5:

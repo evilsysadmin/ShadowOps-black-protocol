@@ -41,6 +41,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - After extraction, choose 1 (share intel with handler) or 2 (retain for leverage). Check distinct trust/leverage outcomes and that the decision is applied once. The first successful debrief records the canonical choice in `user://campaign.cfg` (Godot local app data). Replays never change the first choice or accumulate reputation. Restart Godot to verify persistence. Invalid or unsupported saves are left untouched; failed saves are shown in the debrief.
 
+- The first recorded mission grants one persistent specialization point. At the debrief choose 3 (Resilience: +20 maximum health), 4 (Infiltration: faster crouched movement), or 5 (Mobility: faster sprint). Effects apply on next deployment. The choice is permanent for this prototype save, and replays do not grant additional points. Existing campaign records without a specialization receive the same unspent point. Check save/restart, double selection prevention, and actual effects.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

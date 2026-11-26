@@ -68,3 +68,19 @@ func handler_trust() -> int:
 
 func independent_leverage() -> int:
 	return 1 if intel_choice == "retain" else 0
+
+# Deployment kit is session-local, independent of permanent progression.
+var deployment_kit := "standard"
+const KITS := ["standard", "protection", "supplies"]
+
+func select_deployment_kit(kit: String) -> bool:
+	if not KITS.has(kit):
+		return false
+	deployment_kit = kit
+	return true
+
+func kit_health_bonus() -> int:
+	return 25 if deployment_kit == "protection" else 0
+
+func kit_reserve() -> int:
+	return 40 if deployment_kit == "supplies" else (16 if deployment_kit == "protection" else 24)

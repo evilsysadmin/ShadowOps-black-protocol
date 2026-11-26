@@ -13,6 +13,9 @@ var reserve := 24
 var reload_remaining := 0.0
 var ammo_label: Label
 var reload_requested := false
+var hit_flash := 0.0
+var impact_mark: MeshInstance3D
+var impact_time := 0.0
 
 func _ready() -> void:
 	agent = get_parent() as CharacterBody3D
@@ -47,6 +50,18 @@ func _ready() -> void:
 	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	ammo_label.add_theme_font_size_override("font_size", 22)
 	update_ammo()
+	impact_mark = MeshInstance3D.new()
+	var sphere := SphereMesh.new()
+	sphere.radius = 0.045
+	sphere.height = 0.09
+	impact_mark.mesh = sphere
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(1.0, 0.76, 0.36)
+	impact_mark.material_override = mat
+	agent.add_child(impact_mark)
+	impact_mark.top_level = true
+	impact_mark.hide()
 
 func request_shot() -> void:
 	pending = true
@@ -60,6 +75,11 @@ func update_ammo() -> void:
 		ammo_label.text += "  RELOADING"
 
 func _physics_process(delta: float) -> void:
+	hit_flash = maxf(0.0, hit_flash - delta)
+	impact_time = maxf(0.0, impact_time - delta)
+	impact_mark.visible = impact_time > 0.0
+	reticle.text = "×" if hit_flash > 0.0 else "+"
+	reticle.modulate = Color(1.0, 0.70, 0.32) if hit_flash > 0.0 else Color.WHITE
 	cooldown = maxf(0.0, cooldown - delta)
 	feedback_time = maxf(0.0, feedback_time - delta)
 	if feedback_time <= 0.0:
@@ -110,9 +130,14 @@ func fire() -> void:
 	var impact := space.intersect_ray(shot)
 	feedback.text = "MISS"
 	if not impact.is_empty():
+		var position_hit: Vector3 = impact.get("position")
+		impact_mark.global_position = position_hit
+		impact_time = 0.14
+		impact_mark.show()
 		var target: Object = impact.get("collider")
 		feedback.text = "IMPACT"
 		if is_instance_valid(target) and target.has_method("receive_hit"):
 			target.call("receive_hit", 1)
 			feedback.text = "TARGET HIT"
+			hit_flash = 0.18
 	feedback_time = 0.65

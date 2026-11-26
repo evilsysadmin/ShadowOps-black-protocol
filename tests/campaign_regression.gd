@@ -141,6 +141,9 @@ func run_regression() -> void:
 	check(Campaign.archive_completed, "archive completion survives specialization and reload")
 	check(Campaign.intel_choice == "retain" and Campaign.specialization == "resilience", "reload restores campaign")
 	check(Campaign.select_deployment_kit("protection"), "select protection for field test")
+	check(Campaign.select_deployment_equipment("light_armor"), "select owned armor")
+	check(not Campaign.select_deployment_equipment("invalid") and Campaign.equipment_active("light_armor"), "invalid selection preserves slot")
+	check(not Campaign.equipment_active("quiet_kit"), "single equipment slot")
 	var hotel: Node = preload("res://scenes/hotel.tscn").instantiate()
 	add_child(hotel)
 	await get_tree().physics_frame
@@ -148,12 +151,12 @@ func run_regression() -> void:
 	check(is_instance_valid(agent), "hotel agent exists")
 	if is_instance_valid(agent):
 		check(int(agent.get("maximum_health")) == 160, "armor, resilience and protection stack")
-		check(is_equal_approx(float(agent.get("crouch_speed")), 1.5), "independent movement kit applies in field")
+		check(is_equal_approx(float(agent.get("crouch_speed")), 1.25), "unselected movement kit inactive")
 		check(int(agent.get("health")) == 160, "spawn with full health")
 		var combat: Node = agent.get("combat")
 		check(is_instance_valid(combat), "field combat exists")
 		if is_instance_valid(combat):
-			check(int(combat.get("reserve")) == 24, "utility rig stacks with kit reserve")
+			check(int(combat.get("reserve")) == 16, "unselected utility rig inactive")
 	var guard := hotel.get_node_or_null("Guard")
 	check(is_instance_valid(guard), "hotel guard exists")
 	if is_instance_valid(guard):
@@ -219,7 +222,10 @@ func run_regression() -> void:
 		check(GameSettings.save_effects_volume(1.5) and is_equal_approx(GameSettings.effects_volume, 1.0), "volume clamped")
 	safehouse.queue_free()
 	await get_tree().process_frame
+	check(Campaign.select_deployment_equipment("quiet_kit") and Campaign.equipment_active("quiet_kit"), "switch to owned movement kit")
 	await check_relay_scene()
+	check(Campaign.select_deployment_equipment("utility_rig") and Campaign.equipment_active("utility_rig"), "switch to utility rig")
+	check(Campaign.select_deployment_equipment("") and not Campaign.equipment_active("utility_rig"), "empty slot accepted")
 	check_contract_branches()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	if failures == 0:
@@ -323,6 +329,7 @@ func check_relay_scene() -> void:
 		agent.set_physics_process(false)
 		guard.set_physics_process(false)
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
+		check(is_equal_approx(float(agent.get("crouch_speed")), 1.5), "selected movement kit applies in field")
 		check(agent.position.is_equal_approx(relay_script.spawn_for(Campaign.relay_route())), "relay uses canonical entry")
 		await get_tree().physics_frame
 		await get_tree().physics_frame

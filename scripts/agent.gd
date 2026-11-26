@@ -48,9 +48,9 @@ func _ready() -> void:
 			sprint_speed = 6.4
 	if field_mode:
 		maximum_health += Campaign.kit_health_bonus()
-		if Campaign.owns_equipment("light_armor"):
+		if Campaign.equipment_active("light_armor"):
 			maximum_health += 15
-		if Campaign.owns_equipment("quiet_kit"):
+		if Campaign.equipment_active("quiet_kit"):
 			crouch_speed += 0.25
 	health = maximum_health
 	var collider := CollisionShape3D.new()

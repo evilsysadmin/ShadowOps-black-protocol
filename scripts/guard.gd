@@ -17,6 +17,7 @@ var state: GuardState = GuardState.PATROL
 var attack_timer := 0.0
 var search_remaining := 0.0
 var ever_alerted := false
+var search_from_alert := false
 const SEARCH_DURATION := 4.0
 const ATTACK_INTERVAL := 1.35
 const ATTACK_DAMAGE := 15
@@ -54,23 +55,13 @@ func _physics_process(delta: float) -> void:
 		velocity.x = 0.0
 		velocity.z = 0.0
 		face_player()
-		if state == GuardState.ALERT or state == GuardState.SEARCH:
-			state = GuardState.ALERT
-		else:
-			suspicion = minf(1.0, suspicion + delta * (0.24 if bool(player.get("crouched")) else 0.55))
-			state = GuardState.SUSPICIOUS
-			if suspicion >= 1.0:
-				state = GuardState.ALERT
-				attack_timer = ATTACK_INTERVAL
+		update_detection(delta, bool(player.get("crouched")))
 		if state == GuardState.ALERT and attack_timer <= 0.0:
 			body.trigger_shot()
 			player.call("receive_damage", ATTACK_DAMAGE)
 			attack_timer = ATTACK_INTERVAL
 	elif state == GuardState.ALERT:
-		state = GuardState.SEARCH
-		search_remaining = SEARCH_DURATION
-		velocity.x = 0.0
-		velocity.z = 0.0
+		begin_search(true)
 	elif state == GuardState.SEARCH:
 		search_remaining -= delta
 		facing = facing.rotated(Vector3.UP, delta * 1.4)
@@ -79,12 +70,11 @@ func _physics_process(delta: float) -> void:
 		if search_remaining <= 0.0:
 			state = GuardState.PATROL
 			suspicion = 0.0
+			search_from_alert = false
 	else:
 		suspicion = maxf(0.0, suspicion - delta * 0.3)
 		state = GuardState.SUSPICIOUS if suspicion > 0.0 else GuardState.PATROL
 		patrol(delta)
-	if state == GuardState.ALERT:
-		ever_alerted = true
 	rotation.y = atan2(-facing.x, -facing.z)
 	if not is_on_floor():
 		velocity.y -= 9.8 * delta
@@ -94,6 +84,31 @@ func _physics_process(delta: float) -> void:
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
 	body.animate_pose(delta, actual_speed, false, state == GuardState.ALERT and visible)
 	update_status()
+
+# A curious guard must identify the player; a recently alerted guard can reacquire immediately.
+func update_detection(delta: float, player_crouched: bool) -> void:
+	if state == GuardState.ALERT or (state == GuardState.SEARCH and search_from_alert):
+		enter_alert(false)
+		return
+	suspicion = minf(1.0, suspicion + delta * (0.24 if player_crouched else 0.55))
+	state = GuardState.SUSPICIOUS
+	search_from_alert = false
+	if suspicion >= 1.0:
+		enter_alert(true)
+
+func enter_alert(reset_attack: bool) -> void:
+	state = GuardState.ALERT
+	ever_alerted = true
+	suspicion = 1.0
+	if reset_attack:
+		attack_timer = ATTACK_INTERVAL
+
+func begin_search(from_alert: bool) -> void:
+	state = GuardState.SEARCH
+	search_from_alert = from_alert
+	search_remaining = SEARCH_DURATION
+	velocity.x = 0.0
+	velocity.z = 0.0
 
 func face_player() -> void:
 	var direction := player.global_position - global_position
@@ -140,7 +155,7 @@ func sees_player() -> bool:
 	return hit.get("collider") == player
 
 func receive_hit(amount: int) -> void:
-	if health <= 0:
+	if health <= 0 or amount <= 0:
 		return
 	health = maxi(0, health - amount)
 	if health == 0:
@@ -151,10 +166,9 @@ func receive_hit(amount: int) -> void:
 		body.position.y = 0.3
 		update_status()
 	else:
+		# A surviving hit is an actual alert, even before the next physics tick.
 		if state != GuardState.ALERT:
-			state = GuardState.SEARCH
-			search_remaining = SEARCH_DURATION
-			attack_timer = ATTACK_INTERVAL
+			enter_alert(true)
 		update_status()
 
 func update_status() -> void:

@@ -174,6 +174,17 @@ func run_regression() -> void:
 		if is_instance_valid(guard_visual):
 			check(guard_visual.get("knees").size() == 2, "guard articulated knees")
 			check(guard_visual.get("elbows").size() == 2, "guard articulated elbows")
+		var guard_script = preload("res://scripts/guard.gd")
+		var probe = guard_script.new()
+		probe.begin_search(false)
+		probe.update_detection(0.1, false)
+		check(not probe.ever_alerted and probe.state == guard_script.GuardState.SUSPICIOUS, "curiosity does not instantly alert")
+		probe.update_detection(2.0, false)
+		check(probe.ever_alerted and probe.state == guard_script.GuardState.ALERT, "detection records alert immediately")
+		probe.begin_search(true)
+		probe.update_detection(0.01, true)
+		check(probe.state == guard_script.GuardState.ALERT, "alerted search reacquires")
+		probe.free()
 	if is_instance_valid(agent):
 		var field_agent := agent as CharacterBody3D
 		field_agent.set_physics_process(false)

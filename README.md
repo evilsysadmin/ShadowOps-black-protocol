@@ -95,6 +95,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Procedural character rigs now include a stylized held prop, short visual shot pulse and reload pose driven by actual combat events. These are presentation-only: no change to hit resolution, damage or reload timing. The impact marker is owned by the combat node, and the synthesized audio envelope uses typed arithmetic. Local regression checks marker ownership and animation state transitions.
 
+- Guard detection distinguishes curiosity from a search after full alert. Only the latter reacquires immediately. A surviving hit records full alert immediately rather than waiting for the next physics tick. The alert history remains canonical for rewards and contracts. Local regressions cover detection transitions.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

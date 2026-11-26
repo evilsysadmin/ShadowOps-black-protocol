@@ -10,6 +10,7 @@ func _ready() -> void:
 	build_cue("damage", 0.19, 150.0, 95.0, 0.19)
 	build_cue("objective", 0.30, 440.0, 880.0, 0.12)
 	build_cue("failure", 0.35, 320.0, 120.0, 0.12)
+	build_cue("distraction", 0.23, 780.0, 360.0, 0.10)
 
 func build_cue(key: String, duration: float, start_hz: float, end_hz: float, amplitude: float) -> void:
 	var frames := int(duration * RATE)

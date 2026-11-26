@@ -30,6 +30,8 @@ var cover_label: Label
 var distraction_available := true
 var distraction_requested := false
 var distraction_label: Label
+var distraction_feedback_remaining := 0.0
+const DISTRACTION_FEEDBACK_SECONDS := 1.5
 const MAX_HEALTH := 100
 var maximum_health := MAX_HEALTH
 var health := MAX_HEALTH
@@ -166,6 +168,7 @@ func _physics_process(delta: float) -> void:
 			float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),
 			float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))
 		).limit_length()
+	advance_distraction_feedback(delta)
 	if distraction_requested:
 		distraction_requested = false
 		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
@@ -312,16 +315,31 @@ func eye_height() -> float:
 
 func refresh_distraction() -> void:
 	distraction_label.text = "DISTRACTION [F] · 1 available" if distraction_available else "DISTRACTION · spent"
+	distraction_label.modulate = Color(0.75, 0.89, 0.85) if distraction_available else Color(0.65, 0.69, 0.70)
+
+func show_distraction_feedback(accepted: bool) -> void:
+	distraction_feedback_remaining = DISTRACTION_FEEDBACK_SECONDS
+	distraction_label.text = "DISTRACTION · deployed" if accepted else "DISTRACTION · unavailable (charge retained)"
+	distraction_label.modulate = Color(0.55, 0.90, 0.72) if accepted else Color(1.0, 0.78, 0.40)
+
+func advance_distraction_feedback(delta: float) -> void:
+	if distraction_feedback_remaining <= 0.0:
+		return
+	distraction_feedback_remaining = maxf(0.0, distraction_feedback_remaining - delta)
+	if distraction_feedback_remaining <= 0.0:
+		refresh_distraction()
 
 func use_distraction() -> bool:
 	if not field_mode or not controls_enabled or not distraction_available:
 		return false
 	var guard := get_parent().get_node_or_null("Guard")
 	if not is_instance_valid(guard) or not guard.has_method("request_distraction"):
+		show_distraction_feedback(false)
 		return false
 	if not bool(guard.call("request_distraction")):
-		distraction_label.text = "DISTRACTION · unavailable now (charge retained)"
+		show_distraction_feedback(false)
 		return false
 	distraction_available = false
-	refresh_distraction()
+	show_distraction_feedback(true)
+	play_cue("distraction")
 	return true

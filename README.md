@@ -101,6 +101,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - After confirmed visual contact, guards remember the last observed position and make a bounded search toward it before scanning in place. The search never reads the hidden agent's current location, ends after the existing four-second budget, and retains historical alert status. Direct movement remains collision-limited; no navmesh or obstacle pathfinding yet. Local regression covers stored position, arrival and timeout.
 
+- Distraction feedback now distinguishes rejected (charge retained), deployed and spent states. Temporary messages expire using simulation time, with a synthesized interface cue on success that respects effects volume. Guard status updates immediately on acceptance. Local regression covers both message lifecycles.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

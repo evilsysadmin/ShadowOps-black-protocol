@@ -20,6 +20,7 @@ func _ready() -> void:
 	build_shell()
 	build_reception()
 	build_lounge()
+	build_cover_objects()
 	build_corridor()
 	var player := CharacterBody3D.new()
 	player.name = "Agent"
@@ -94,6 +95,13 @@ func build_lounge() -> void:
 	for z in [6.9, -7.6]:
 		plant(Vector3(4.8, 0.0, z))
 
+func build_cover_objects() -> void:
+	# Two clearly defined low barriers with real collision.
+	for z in [-0.6, 5.8]:
+		var barrier := box(Vector3(-3.65, 0.54, z), Vector3(2.4, 1.08, 0.5), WOOD)
+		barrier.add_to_group("low_cover")
+		box(Vector3(-3.65, 1.10, z), Vector3(2.48, 0.08, 0.58), BRASS, false)
+
 func build_corridor() -> void:
 	for side in [-1.0, 1.0]:
 		box(Vector3(side * 3.9, 2.1, -8.8), Vector3(3.8, 4.2, 0.30), WOOD)
@@ -139,7 +147,7 @@ func material(color: Color, glow := false) -> StandardMaterial3D:
 		mat.emission_energy_multiplier = 0.8
 	return mat
 
-func box(at: Vector3, dimensions: Vector3, color: Color, solid := true, glow := false, visible_mesh := true) -> void:
+func box(at: Vector3, dimensions: Vector3, color: Color, solid := true, glow := false, visible_mesh := true) -> Node3D
 	var root := Node3D.new()
 	if solid:
 		root = StaticBody3D.new()
@@ -158,6 +166,7 @@ func box(at: Vector3, dimensions: Vector3, color: Color, solid := true, glow := 
 		bounds.size = dimensions
 		collider.shape = bounds
 		root.add_child(collider)
+	return root
 
 func lamp(at: Vector3, radius: float, energy: float, shadows := false) -> void:
 	var light := OmniLight3D.new()

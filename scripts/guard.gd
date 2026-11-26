@@ -11,6 +11,13 @@ var body: Node3D
 var status: Label3D
 var pause_time := 0.0
 var facing := Vector3.BACK
+enum GuardState { PATROL, SUSPICIOUS, ALERT, SEARCH, DOWN }
+var state: GuardState = GuardState.PATROL
+var attack_timer := 0.0
+var search_remaining := 0.0
+const SEARCH_DURATION := 4.0
+const ATTACK_INTERVAL := 1.35
+const ATTACK_DAMAGE := 15
 
 func _ready() -> void:
 	player = get_parent().get_node("Agent") as CharacterBody3D
@@ -55,16 +62,39 @@ func _physics_process(delta: float) -> void:
 	if health <= 0 or not bool(player.get("controls_enabled")):
 		velocity = Vector3.ZERO
 		return
-	if sees_player():
-		suspicion = minf(1.0, suspicion + delta * (0.24 if bool(player.get("crouched")) else 0.55))
+	attack_timer = maxf(0.0, attack_timer - delta)
+	var visible := sees_player()
+	if visible:
 		velocity.x = 0.0
 		velocity.z = 0.0
-		var direction := player.global_position - global_position
-		direction.y = 0.0
-		if direction.length_squared() > 0.001:
-			facing = direction.normalized()
+		face_player()
+		if state == GuardState.ALERT or state == GuardState.SEARCH:
+			state = GuardState.ALERT
+		else:
+			suspicion = minf(1.0, suspicion + delta * (0.24 if bool(player.get("crouched")) else 0.55))
+			state = GuardState.SUSPICIOUS
+			if suspicion >= 1.0:
+				state = GuardState.ALERT
+				attack_timer = ATTACK_INTERVAL
+		if state == GuardState.ALERT and attack_timer <= 0.0:
+			player.call("receive_damage", ATTACK_DAMAGE)
+			attack_timer = ATTACK_INTERVAL
+	elif state == GuardState.ALERT:
+		state = GuardState.SEARCH
+		search_remaining = SEARCH_DURATION
+		velocity.x = 0.0
+		velocity.z = 0.0
+	elif state == GuardState.SEARCH:
+		search_remaining -= delta
+		facing = facing.rotated(Vector3.UP, delta * 1.4)
+		velocity.x = 0.0
+		velocity.z = 0.0
+		if search_remaining <= 0.0:
+			state = GuardState.PATROL
+			suspicion = 0.0
 	else:
 		suspicion = maxf(0.0, suspicion - delta * 0.3)
+		state = GuardState.SUSPICIOUS if suspicion > 0.0 else GuardState.PATROL
 		patrol(delta)
 	rotation.y = atan2(-facing.x, -facing.z)
 	if not is_on_floor():
@@ -73,8 +103,12 @@ func _physics_process(delta: float) -> void:
 		velocity.y = 0.0
 	move_and_slide()
 	update_status()
-	if suspicion >= 1.0:
-		mission.call("guard_detected")
+
+func face_player() -> void:
+	var direction := player.global_position - global_position
+	direction.y = 0.0
+	if direction.length_squared() > 0.001:
+		facing = direction.normalized()
 
 func patrol(delta: float) -> void:
 	if pause_time > 0.0:
@@ -99,11 +133,11 @@ func sees_player() -> bool:
 	var origin := global_position + Vector3(0, 1.65, 0)
 	var target := player.global_position + Vector3(0, float(player.call("eye_height")), 0)
 	var offset := target - origin
-	var sight_range := 3.8 if bool(player.get("crouched")) else 5.5
+	var sight_range := 6.5 if state == GuardState.ALERT or state == GuardState.SEARCH else (3.8 if bool(player.get("crouched")) else 5.5)
 	if offset.length() > sight_range:
 		return false
 	var horizontal := Vector3(offset.x, 0, offset.z)
-	if horizontal.length() > 0.65 and facing.dot(horizontal.normalized()) < 0.5:
+	if state != GuardState.ALERT and horizontal.length() > 0.65 and facing.dot(horizontal.normalized()) < 0.5:
 		return false
 	var query := PhysicsRayQueryParameters3D.create(origin, target)
 	query.exclude = [get_rid()]
@@ -115,19 +149,29 @@ func receive_hit(amount: int) -> void:
 		return
 	health = maxi(0, health - amount)
 	if health == 0:
+		state = GuardState.DOWN
 		collision_layer = 0
 		collision_mask = 0
 		body.rotation.z = PI * 0.5
 		body.position.y = 0.3
 		update_status()
 	else:
-		suspicion = maxf(suspicion, 0.5)
+		if state != GuardState.ALERT:
+			state = GuardState.SEARCH
+			search_remaining = SEARCH_DURATION
+			attack_timer = ATTACK_INTERVAL
 		update_status()
 
 func update_status() -> void:
 	if health == 0:
 		status.text = "DOWN"
 		status.modulate = Color(0.55, 0.65, 0.65)
+	elif state == GuardState.ALERT:
+		status.text = "ALERT"
+		status.modulate = Color(1.0, 0.26, 0.20)
+	elif state == GuardState.SEARCH:
+		status.text = "SEARCHING"
+		status.modulate = Color(1.0, 0.78, 0.28)
 	elif suspicion > 0.0:
 		status.text = "SUSPICION %d%%" % int(suspicion * 100.0)
 		status.modulate = Color(1.0, 0.64, 0.24)

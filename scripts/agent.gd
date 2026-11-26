@@ -22,6 +22,9 @@ var boom: SpringArm3D
 var body_collider: CollisionShape3D
 var body_capsule: CapsuleShape3D
 var crouched := false
+const MAX_HEALTH := 100
+var health := MAX_HEALTH
+var health_label: Label
 const STAND_HEIGHT := 1.8
 const CROUCH_HEIGHT := 1.12
 
@@ -61,6 +64,16 @@ func _ready() -> void:
 	label.position = Vector2(24, 22)
 	label.text = "BLACK PROTOCOL | FIELD TEST\nWASD · Shift sprint · Ctrl crouch · Q shoulder · E interact\nRMB aim · LMB fire · R reload · Esc release"
 	hud.add_child(label)
+	health_label = Label.new()
+	health_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(health_label)
+	health_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	health_label.offset_left = 24
+	health_label.offset_top = -55
+	health_label.offset_bottom = -20
+	health_label.offset_right = 220
+	health_label.add_theme_font_size_override("font_size", 22)
+	refresh_health()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func build_model() -> void:
@@ -181,6 +194,18 @@ func can_stand() -> bool:
 	query.exclude = [get_rid()]
 	query.collision_mask = collision_mask
 	return get_world_3d().direct_space_state.intersect_shape(query, 1).is_empty()
+
+func receive_damage(amount: int) -> void:
+	if not controls_enabled or amount <= 0:
+		return
+	health = maxi(0, health - amount)
+	refresh_health()
+	if health == 0:
+		get_parent().get_node("Mission").call("agent_incapacitated")
+
+func refresh_health() -> void:
+	health_label.text = "HEALTH %d / %d" % [health, MAX_HEALTH]
+	health_label.modulate = Color(1.0, 0.38, 0.30) if health <= 30 else Color(0.85, 0.95, 0.90)
 
 func eye_height() -> float:
 	return 0.88 if crouched else 1.45

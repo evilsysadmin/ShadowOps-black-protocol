@@ -29,11 +29,13 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 - No runtime errors in the debugger.
 
 - Check training target hit feedback and that solid obstacles block shots.
-- Guard patrols; suspicion rises with visible player and falls when line of sight breaks. Detection ends the mission; R retries. Guard can be defeated using the test combat system.
+- Guard patrols; suspicion rises with visible player and falls when line of sight breaks. Full detection starts an alert instead of instantly ending the mission. Guard damages the agent at intervals while visible, searches in place after losing sight and eventually resumes patrol. At zero health, the mission fails; R retries. Guard can be defeated using the test combat system.
 
 - Hold Ctrl to crouch: lower collision capsule, camera and movement speed; release to stand when space permits. Crouching reduces guard visual detection, not invisibility. Check crouched aiming and interaction.
 
 - Check ammo consumption on hits and misses, reload from finite reserve, no shots during reload, and no reload after mission end.
+
+- Check health HUD, alert reaction window, no damage behind solid obstacles, search timeout and replay restoring full health.
 
 ## Development policy
 

@@ -96,7 +96,7 @@ func _physics_process(_delta: float) -> void:
 			prompt.text = ""
 	interact_requested = false
 
-func guard_detected() -> void:
+func agent_incapacitated() -> void:
 	if stage == Stage.COMPLETE or stage == Stage.FAILED:
 		return
 	stage = Stage.FAILED
@@ -125,5 +125,5 @@ func refresh_objective() -> void:
 			objective.text = "OPERATION COMPLETE | Intel recovered and agent extracted"
 			prompt.text = "Mission complete — press R to replay"
 		Stage.FAILED:
-			objective.text = "OPERATION FAILED | Agent detected"
+			objective.text = "OPERATION FAILED | Agent incapacitated"
 			prompt.text = "Compromised — press R to retry"

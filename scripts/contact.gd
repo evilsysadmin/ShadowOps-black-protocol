@@ -9,6 +9,8 @@ var return_button: Button
 var transitioning := false
 var pending_choice := ""
 var confirmation: ConfirmationDialog
+var contract_button: Button
+var contract_confirmation: ConfirmationDialog
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -32,6 +34,15 @@ func _ready() -> void:
 	panel.add_child(choices)
 	add_choice("Coordinate intelligence (+1 trust)", "coordinate")
 	add_choice("Keep operational autonomy (-1 trust, +1 leverage)", "autonomy")
+	contract_button = Button.new()
+	contract_button.custom_minimum_size.y = 44
+	contract_button.pressed.connect(request_contract)
+	panel.add_child(contract_button)
+	contract_confirmation = ConfirmationDialog.new()
+	contract_confirmation.title = "Exclusive official contract"
+	contract_confirmation.dialog_text = "Accept the official contract? Complete Silent Archive without damage for 30 credits and +1 trust. This permanently excludes Rook's contract."
+	contract_confirmation.confirmed.connect(commit_contract)
+	add_child(contract_confirmation)
 	return_button = Button.new()
 	return_button.text = "Return to field records"
 	return_button.custom_minimum_size.y = 44
@@ -63,6 +74,8 @@ func add_choice(content: String, choice: String) -> void:
 
 func refresh() -> void:
 	choices.visible = Campaign.can_negotiate_handler()
+	contract_button.text = Campaign.handler_contract_status()
+	contract_button.disabled = not Campaign.can_accept_handler_contract()
 	status.text = "Trust %+d   ·   Leverage %+d" % [Campaign.handler_trust(), Campaign.independent_leverage()]
 	if Campaign.save_blocked:
 		message.text = "Campaign file unavailable. No agreement can be saved."
@@ -94,8 +107,18 @@ func commit_choice() -> void:
 	refresh()
 	return_button.grab_focus()
 
+func request_contract() -> void:
+	if not transitioning and Campaign.can_accept_handler_contract():
+		contract_confirmation.popup_centered()
+
+func commit_contract() -> void:
+	var success := Campaign.accept_handler_contract()
+	refresh()
+	if not success:
+		status.text += " · Unable to accept contract"
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and not confirmation.visible:
+	if event.is_action_pressed("ui_cancel") and not confirmation.visible and not contract_confirmation.visible:
 		get_viewport().set_input_as_handled()
 		go_back()
 

@@ -9,7 +9,7 @@ var archive_completed := false
 var handler_agreement := ""
 var archive_intel_cost := 0
 var equipment_owned: Array[String] = []
-const EQUIPMENT_COSTS := {"light_armor": 80, "utility_rig": 70}
+const EQUIPMENT_COSTS := {"light_armor": 80, "utility_rig": 70, "quiet_kit": 65}
 const INTEL_STANDARD_COST := 60
 const INTEL_COORDINATED_COST := 40
 const HANDLER_AGREEMENTS := ["coordinate", "autonomy"]
@@ -63,7 +63,7 @@ func load_campaign() -> void:
 	var validated: Array[String] = []
 	var spent := int(paid)
 	for item in owned:
-		if not item is String or not EQUIPMENT_COSTS.has(item) or validated.has(item):
+		if not item is String or not EQUIPMENT_COSTS.has(item) or validated.has(item) or (item == "quiet_kit" and saved != "retain" and agreement != "autonomy"):
 			save_blocked = true
 			return
 		validated.append(item)
@@ -248,8 +248,13 @@ func buy_archive_intel() -> bool:
 func owns_equipment(item: String) -> bool:
 	return equipment_owned.has(item)
 
+func independent_supplier_available() -> bool:
+	return not save_blocked and independent_leverage() > 0
+
 func buy_equipment(item: String) -> bool:
 	if save_blocked or intel_choice.is_empty() or not EQUIPMENT_COSTS.has(item) or owns_equipment(item):
+		return false
+	if item == "quiet_kit" and not independent_supplier_available():
 		return false
 	if available_credits() < int(EQUIPMENT_COSTS[item]):
 		return false

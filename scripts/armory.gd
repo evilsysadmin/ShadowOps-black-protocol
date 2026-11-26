@@ -7,6 +7,8 @@ var panel: VBoxContainer
 var balance: Label
 var status: Label
 var rook_status: Label
+var contract_button: Button
+var contract_confirmation: ConfirmationDialog
 var buttons: Dictionary = {}
 var pending := ""
 var confirmation: ConfirmationDialog
@@ -23,7 +25,7 @@ func _ready() -> void:
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	panel = VBoxContainer.new()
 	panel.custom_minimum_size.x = 570
-	panel.add_theme_constant_override("separation", 14)
+	panel.add_theme_constant_override("separation", 9)
 	center.add_child(panel)
 	line("SHADOWOPS / EQUIPMENT DIVISION", 18)
 	line("ARMORY", 34)
@@ -38,6 +40,15 @@ func _ready() -> void:
 		button.pressed.connect(request_purchase.bind(item))
 		panel.add_child(button)
 		buttons[item] = button
+	contract_button = Button.new()
+	contract_button.custom_minimum_size.y = 40
+	contract_button.pressed.connect(request_contract)
+	panel.add_child(contract_button)
+	contract_confirmation = ConfirmationDialog.new()
+	contract_confirmation.title = "Rook / Silent Archive"
+	contract_confirmation.dialog_text = "Accept the one-time contract? Avoid full alert on the first successful archive completion to earn 35 credits and reputation. Replays cannot change the outcome."
+	contract_confirmation.confirmed.connect(accept_contract)
+	add_child(contract_confirmation)
 	status = line("", 17)
 	var back := Button.new()
 	back.text = "Return to safehouse"
@@ -63,6 +74,8 @@ func line(content: String, size: int) -> Label:
 func refresh() -> void:
 	balance.text = "Available credits: %d" % Campaign.available_credits()
 	rook_status.text = "Rook · %s (+%d)\n%s" % [Campaign.rook_relationship(), Campaign.rook_reputation(), Campaign.rook_message()]
+	contract_button.text = Campaign.rook_contract_status()
+	contract_button.disabled = not Campaign.can_accept_rook_contract()
 	for item in ITEMS:
 		var button: Button = buttons[item]
 		var price := int(Campaign.EQUIPMENT_COSTS[item])
@@ -100,8 +113,19 @@ func commit_purchase() -> void:
 	status.text = "Equipment acquired."
 	refresh()
 
+func request_contract() -> void:
+	if not transitioning and Campaign.can_accept_rook_contract():
+		contract_confirmation.popup_centered()
+
+func accept_contract() -> void:
+	if not Campaign.accept_rook_contract():
+		status.text = "Unable to accept contract."
+		return
+	status.text = "Rook contract accepted."
+	refresh()
+
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and not confirmation.visible:
+	if event.is_action_pressed("ui_cancel") and not confirmation.visible and not contract_confirmation.visible:
 		get_viewport().set_input_as_handled()
 		go_back()
 

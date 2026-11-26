@@ -106,6 +106,8 @@ func update_operation(index: int) -> void:
 	operation_status.text = "REPLAY — original campaign record preserved." if completed else "NEW OPERATION"
 	intel_button.visible = operation == Operations.ARCHIVE
 	if operation == Operations.ARCHIVE:
+		if Campaign.rook_contract_accepted:
+			operation_status.text += "\nRook: " + Campaign.rook_contract_status()
 		if Campaign.owns_archive_intel():
 			operation_description.text += "\nRecon: records at the far end, guard patrols the central aisle."
 			intel_button.text = "Recon acquired from %s · %d credits remaining" % [Campaign.archive_intel_source(), Campaign.available_credits()]

@@ -31,6 +31,10 @@ func run_regression() -> void:
 	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
 	check(Campaign.available_credits() == 0, "fresh campaign has no credits")
+	check(not Campaign.accept_rook_contract(), "fresh campaign cannot accept contract")
+	check(Campaign.contract_reward_for(true, true, {"alerted": false}) == 35, "clean accepted completion reward")
+	check(Campaign.contract_reward_for(false, true, {"alerted": false}) == 0, "no retroactive contract reward")
+	check(Campaign.contract_reward_for(true, true, {}) == 0, "missing metrics cannot earn contract")
 	check(not Campaign.buy_archive_intel(), "recon locked before completion")
 	check(not Campaign.buy_equipment("light_armor"), "armory locked before completion")
 	check(not Campaign.independent_supplier_available() and not Campaign.buy_equipment("quiet_kit"), "independent supplier locked initially")
@@ -65,6 +69,8 @@ func run_regression() -> void:
 	hotel_report["seconds"] = 999
 	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "report isolated from caller mutation")
 	check(Campaign.select_operation("silent_archive"), "archive unlocked by hotel")
+	check(Campaign.accept_rook_contract(), "accept Rook contract before archive")
+	check(not Campaign.accept_rook_contract() and Campaign.rook_contract_reward() == 0, "contract cannot repeat or prepay")
 	var archive_report := {"seconds": 80, "damage": 15, "shots": 4, "hits": 3, "alerted": true, "guard_down": true}
 	check(Campaign.record_archive(archive_report), "archive completion recorded")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive performance stored")
@@ -72,6 +78,7 @@ func run_regression() -> void:
 	check(Campaign.record_archive({"seconds": 1}), "completed archive replay is ignored")
 	check(Campaign.field_report("silent_archive") == archive_report, "archive replay preserves report")
 	check(Campaign.available_credits() == 280, "canonical rewards cannot be farmed")
+	check(Campaign.rook_contract_reward() == 0 and Campaign.rook_contract_status().begins_with("Closed"), "alert closes contract without bonus")
 	check(Campaign.handler_trust() == -1 and Campaign.independent_leverage() == 1, "retain consequences")
 	check(Campaign.can_negotiate_handler(), "negotiation unlocked")
 	check(not Campaign.negotiate_handler("invalid"), "invalid agreement rejected")
@@ -112,9 +119,11 @@ func run_regression() -> void:
 	Campaign.field_reports.clear()
 	Campaign.handler_agreement = ""
 	Campaign.archive_intel_cost = 0
+	Campaign.rook_contract_accepted = false
 	Campaign.equipment_owned.clear()
 	Campaign.load_campaign()
 	check(Campaign.handler_agreement == "coordinate", "agreement survives reload")
+	check(Campaign.rook_contract_accepted and Campaign.rook_contract_reward() == 0, "closed contract survives reload")
 	check(Campaign.rook_reputation() == 1 and Campaign.rook_relationship() == "Known client", "Rook relationship survives reload")
 	check(Campaign.earned_credits() == 280 and Campaign.available_credits() == 25 and Campaign.owns_equipment("quiet_kit") and Campaign.owns_archive_intel() and Campaign.owns_equipment("light_armor") and Campaign.owns_equipment("utility_rig"), "equipment, recon and balance survive reload")
 	check(Campaign.field_report("unexpected_guest").get("seconds") == 40 and Campaign.field_report("silent_archive") == archive_report, "reports survive specialization and reload")

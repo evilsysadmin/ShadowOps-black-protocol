@@ -23,6 +23,10 @@ func run_regression() -> void:
 	check(handler.relationship("share") != handler.relationship("retain"), "handler remembers decision")
 	check(handler.relationship("").contains("no field history"), "fresh relationship")
 	check(handler.assessment({}).contains("unavailable"), "no fabricated historical assessment")
+	check(handler.deployment_message(true, "share").begins_with("HANDLER"), "assisted deployment contact")
+	check(handler.deployment_message(true, "retain").begins_with("AGENT"), "independent deployment contact")
+	check(handler.recovered_message(true, "retain").begins_with("AGENT"), "independent recovery contact")
+	check(handler.recovered_message(false, "").contains("File secured"), "hotel recovery message")
 	check(operations.report_summary(false, {}) == "Not completed.", "pending operation report")
 	check(operations.report_summary(true, {}).contains("no historical metrics"), "legacy completion report")
 	check(Campaign.intel_choice.is_empty(), "fresh campaign has no decision")
@@ -175,6 +179,15 @@ func check_archive_route(choice: String, expected: Vector3) -> void:
 		var extraction: Vector3 = mission.get("exit_point")
 		check(is_equal_approx(extraction.x, expected.x) and is_equal_approx(extraction.z, expected.z), choice + " matching extraction")
 		check(guard.get("patrol_points").size() == 4, "archive-specific patrol")
+		var radio: Label = mission.get("radio_label")
+		check(is_instance_valid(radio), "archive radio exists")
+		if is_instance_valid(radio):
+			check(radio.visible and radio.text.begins_with("HANDLER" if choice == "share" else "AGENT"), "branch-specific deployment message")
+			mission.call("advance_radio", 6.0)
+			check(not radio.visible, "radio expires")
+			mission.call("show_radio", "Test")
+			mission.call("clear_radio")
+			check(not radio.visible, "radio clears")
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		check(bool(mission.call("can_reach", extraction)), choice + " extraction reachable at spawn")

@@ -21,3 +21,15 @@ static func assessment(report: Dictionary) -> String:
 	if int(report["shots"]) > 0:
 		return "%d shots recorded. No full alert, at least. Review your approach." % int(report["shots"])
 	return "No full alert recorded. Review the field report before the next deployment."
+
+static func deployment_message(archive: bool, choice: String) -> String:
+	if not archive:
+		return "HANDLER / Keep a low profile. The file is at reception."
+	if choice == "share":
+		return "HANDLER / You're at the service access. Recover the ledger."
+	return "AGENT / Independent lead confirmed. Locate the archive ledger."
+
+static func recovered_message(archive: bool, choice: String) -> String:
+	if archive and choice != "share":
+		return "AGENT / Ledger secured. Time to leave."
+	return "HANDLER / " + ("Ledger" if archive else "File") + " secured. Proceed to extraction."

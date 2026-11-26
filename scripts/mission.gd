@@ -1,5 +1,10 @@
 extends Node3D
 
+const Handler = preload("res://scripts/handler_dialogue.gd")
+var radio_label: Label
+var radio_remaining := 0.0
+const RADIO_DURATION := 5.0
+
 enum Stage { RECOVER, EXTRACT, COMPLETE, FAILED, DEBRIEF }
 enum IntelDecision { UNDECIDED, SHARE, RETAIN }
 var intel_decision: IntelDecision = IntelDecision.UNDECIDED
@@ -75,6 +80,22 @@ func _ready() -> void:
 	report_label.add_theme_font_size_override("font_size", 18)
 	report_label.add_theme_color_override("font_color", Color(0.75, 0.89, 0.85))
 	report_label.hide()
+	radio_label = Label.new()
+	radio_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(radio_label)
+	radio_label.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	radio_label.offset_left = -390
+	radio_label.offset_right = -24
+	radio_label.offset_top = 24
+	radio_label.offset_bottom = 120
+	radio_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	radio_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	radio_label.add_theme_font_size_override("font_size", 18)
+	radio_label.add_theme_color_override("font_color", Color(0.75, 0.89, 0.85))
+	radio_label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	radio_label.add_theme_constant_override("shadow_offset_x", 2)
+	radio_label.add_theme_constant_override("shadow_offset_y", 2)
+	show_radio(Handler.deployment_message(archive_operation, Campaign.intel_choice))
 	refresh_objective()
 
 func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node3D:
@@ -134,6 +155,7 @@ func _physics_process(delta: float) -> void:
 		interact_requested = false
 		return
 	elapsed_seconds += delta
+	advance_radio(delta)
 	var target := intel_point if stage == Stage.RECOVER else exit_point
 	var reachable := can_reach(target)
 	prompt.text = ""
@@ -143,6 +165,7 @@ func _physics_process(delta: float) -> void:
 		player.call("play_cue", "objective")
 		if stage == Stage.RECOVER:
 			stage = Stage.EXTRACT
+			show_radio(Handler.recovered_message(archive_operation, Campaign.intel_choice))
 			intel.hide()
 			exit.show()
 		else:
@@ -198,6 +221,7 @@ func can_reach(target: Vector3) -> bool:
 
 func refresh_objective() -> void:
 	if stage == Stage.DEBRIEF or stage == Stage.COMPLETE or stage == Stage.FAILED:
+		clear_radio()
 		refresh_report()
 	match stage:
 		Stage.RECOVER:
@@ -261,3 +285,19 @@ func refresh_report() -> void:
 	var accuracy := "—" if shots == 0 else "%d%%" % roundi(100.0 * float(hits) / float(shots))
 	report_label.text = "FIELD REPORT\nElapsed: %d s · Damage: %d\nShots: %d · Target accuracy: %s\nSecurity: %s" % [int(elapsed_seconds), damage, shots, accuracy, security]
 	report_label.show()
+
+func show_radio(message: String) -> void:
+	radio_label.text = message
+	radio_remaining = RADIO_DURATION
+	radio_label.show()
+
+func advance_radio(delta: float) -> void:
+	if radio_remaining <= 0.0:
+		return
+	radio_remaining = maxf(0.0, radio_remaining - delta)
+	if radio_remaining <= 0.0:
+		clear_radio()
+
+func clear_radio() -> void:
+	radio_remaining = 0.0
+	radio_label.hide()

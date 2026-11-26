@@ -84,3 +84,15 @@ func kit_health_bonus() -> int:
 
 func kit_reserve() -> int:
 	return 40 if deployment_kit == "supplies" else (16 if deployment_kit == "protection" else 24)
+
+const Operations = preload("res://scripts/operation_catalog.gd")
+var selected_operation := Operations.HOTEL
+
+func available_operations() -> Array[String]:
+	return Operations.available_operations(not intel_choice.is_empty())
+
+func select_operation(operation: String) -> bool:
+	if not available_operations().has(operation):
+		return false
+	selected_operation = operation
+	return true

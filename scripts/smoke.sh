@@ -27,4 +27,6 @@ run_checked() {
 }
 run_checked --headless --path . --editor --import
 run_checked --headless --path . --quit-after 120
+run_checked --headless --path . res://scenes/briefing.tscn --quit-after 120
+run_checked --headless --path . res://scenes/hotel.tscn --quit-after 120
 echo "Local Godot import and startup smoke passed."

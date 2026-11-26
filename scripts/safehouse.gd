@@ -82,7 +82,7 @@ func _physics_process(_delta: float) -> void:
 	prompt.text = "[E] Operations terminal" if nearby else "Approach the operations terminal"
 	if requested and nearby and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		requested = false
-		get_tree().call_deferred("change_scene_to_file", "res://scenes/hotel.tscn")
+		get_tree().call_deferred("change_scene_to_file", "res://scenes/briefing.tscn")
 		return
 	requested = false
 

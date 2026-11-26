@@ -1,5 +1,6 @@
 extends Node3D
 
+const Operations = preload("res://scripts/operation_catalog.gd")
 const Handler = preload("res://scripts/handler_dialogue.gd")
 var radio_label: Label
 var radio_remaining := 0.0
@@ -18,7 +19,7 @@ var final_field_report: Dictionary = {}
 
 var intel_point := Vector3(-3.65, 1.38, -3.92)
 var exit_point := Vector3(0, 0.65, 9)
-var archive_operation := false
+var operation_id := Operations.HOTEL
 const REACH := 1.85
 var stage: Stage = Stage.RECOVER
 var player: CharacterBody3D
@@ -30,8 +31,8 @@ var interact_requested := false
 
 func _ready() -> void:
 	player = get_parent().get_node("Agent") as CharacterBody3D
-	campaign_replay = Campaign.archive_completed if archive_operation else not Campaign.intel_choice.is_empty()
-	intel = marker(intel_point, "LEDGER" if archive_operation else "INTEL", Color(0.28, 0.85, 0.78), false)
+	campaign_replay = Campaign.operation_completed(operation_id)
+	intel = marker(intel_point, "LEDGER" if operation_id == Operations.ARCHIVE else "INTEL", Color(0.28, 0.85, 0.78), false)
 	exit = marker(exit_point, "EXTRACTION", Color(0.93, 0.72, 0.31), true)
 	exit.hide()
 	var hud := CanvasLayer.new()
@@ -95,7 +96,7 @@ func _ready() -> void:
 	radio_label.add_theme_color_override("font_shadow_color", Color.BLACK)
 	radio_label.add_theme_constant_override("shadow_offset_x", 2)
 	radio_label.add_theme_constant_override("shadow_offset_y", 2)
-	show_radio(Handler.deployment_message(archive_operation, Campaign.intel_choice))
+	show_radio(Handler.deployment_message(operation_id == Operations.ARCHIVE, Campaign.intel_choice))
 	refresh_objective()
 
 func marker(at: Vector3, title: String, tint: Color, floor_marker: bool) -> Node3D:
@@ -160,17 +161,17 @@ func _physics_process(delta: float) -> void:
 	var reachable := can_reach(target)
 	prompt.text = ""
 	if reachable:
-		prompt.text = ("[E] Recover ledger" if archive_operation else "[E] Recover intel") if stage == Stage.RECOVER else "[E] Extract"
+		prompt.text = ("[E] Recover ledger" if operation_id == Operations.ARCHIVE else "[E] Recover intel") if stage == Stage.RECOVER else "[E] Extract"
 	if interact_requested and reachable and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		player.call("play_cue", "objective")
 		if stage == Stage.RECOVER:
 			stage = Stage.EXTRACT
-			show_radio(Handler.recovered_message(archive_operation, Campaign.intel_choice))
+			show_radio(Handler.recovered_message(operation_id == Operations.ARCHIVE, Campaign.intel_choice))
 			intel.hide()
 			exit.show()
 		else:
 			final_field_report = measure_field_report()
-			if archive_operation:
+			if operation_id == Operations.ARCHIVE:
 				record_failed = not Campaign.record_archive(final_field_report)
 				stage = Stage.COMPLETE
 			else:
@@ -225,9 +226,9 @@ func refresh_objective() -> void:
 		refresh_report()
 	match stage:
 		Stage.RECOVER:
-			objective.text = "OPERATION: SILENT ARCHIVE | Recover the ledger" if archive_operation else "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
+			objective.text = "OPERATION: SILENT ARCHIVE | Recover the ledger" if operation_id == Operations.ARCHIVE else "OPERATION: UNEXPECTED GUEST | Recover the intel at reception"
 		Stage.EXTRACT:
-			objective.text = "LEDGER SECURED | Return to extraction" if archive_operation else "INTEL SECURED | Return to the starting area"
+			objective.text = "LEDGER SECURED | Return to extraction" if operation_id == Operations.ARCHIVE else "INTEL SECURED | Return to the starting area"
 		Stage.DEBRIEF:
 			objective.text = "EXTRACTION COMPLETE | Incoming secure transmission"
 			prompt.text = "Choose who controls the information"
@@ -236,7 +237,7 @@ func refresh_objective() -> void:
 				decision_label.text += "\nReplay — campaign decision will not change"
 			decision_label.show()
 		Stage.COMPLETE:
-			objective.text = "OPERATION COMPLETE | Ledger recovered" if archive_operation else "OPERATION COMPLETE | Intel recovered and agent extracted"
+			objective.text = "OPERATION COMPLETE | Ledger recovered" if operation_id == Operations.ARCHIVE else "OPERATION COMPLETE | Intel recovered and agent extracted"
 			if record_failed:
 				decision_label.text = "Operation complete locally — campaign save unavailable"
 			else:
@@ -284,7 +285,7 @@ func refresh_report() -> void:
 			security += " / guard down"
 	var accuracy := "—" if shots == 0 else "%d%%" % roundi(100.0 * float(hits) / float(shots))
 	report_label.text = "FIELD REPORT\nElapsed: %d s · Damage: %d\nShots: %d · Target accuracy: %s\nSecurity: %s" % [int(elapsed_seconds), damage, shots, accuracy, security]
-	if archive_operation and stage == Stage.COMPLETE and not record_failed:
+	if operation_id == Operations.ARCHIVE and stage == Stage.COMPLETE and not record_failed:
 		var contract := Campaign.archive_contract_summary()
 		if not contract.is_empty():
 			report_label.text += "\n" + ("Archived contract: " if campaign_replay else "Contract: ") + contract

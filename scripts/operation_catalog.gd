@@ -29,3 +29,11 @@ static func report_summary(completed: bool, report: Dictionary) -> String:
 	var security := "Full alert" if report["alerted"] else "No full alert"
 	security += " / guard down" if report["guard_down"] else " / guard active"
 	return "%d s · %d damage · %d shots · %s accuracy\n%s" % [report["seconds"], report["damage"], shots, accuracy, security]
+
+static func scene_for(operation: String) -> String:
+	match operation:
+		HOTEL:
+			return "res://scenes/hotel.tscn"
+		ARCHIVE:
+			return "res://scenes/archive.tscn"
+	return ""

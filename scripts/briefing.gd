@@ -102,7 +102,7 @@ func update_operation(index: int) -> void:
 	var operation := operation_ids[index]
 	operation_title.text = Operations.title_for(operation)
 	operation_description.text = Operations.description_for(operation, Campaign.intel_choice)
-	var completed := Campaign.archive_completed if operation == Operations.ARCHIVE else not Campaign.intel_choice.is_empty()
+	var completed := Campaign.operation_completed(operation)
 	operation_status.text = "REPLAY — original campaign record preserved." if completed else "NEW OPERATION"
 	intel_button.visible = operation == Operations.ARCHIVE
 	if operation == Operations.ARCHIVE:
@@ -138,7 +138,7 @@ func _deploy() -> void:
 	if not Campaign.select_operation(operation):
 		error_label.text = "Operation unavailable."
 		return
-	_go(ARCHIVE_SCENE if operation == Operations.ARCHIVE else HOTEL_SCENE)
+	_go(Operations.scene_for(operation))
 
 func refresh_agent_status() -> void:
 	var skill := Campaign.specialization.capitalize() if not Campaign.specialization.is_empty() else "Unassigned"

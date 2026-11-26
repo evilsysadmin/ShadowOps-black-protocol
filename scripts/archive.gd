@@ -49,7 +49,7 @@ func _ready() -> void:
 	var mission := Node3D.new()
 	mission.name = "Mission"
 	mission.set_script(preload("res://scripts/mission.gd"))
-	mission.set("archive_operation", true)
+	mission.set("operation_id", "silent_archive")
 	mission.set("intel_point", LEDGER_POINT)
 	mission.set("exit_point", Vector3(spawn.x, 0.65, spawn.z))
 	add_child(mission)

@@ -73,6 +73,8 @@ func run_regression() -> void:
 	hotel_report["seconds"] = 999
 	check(Campaign.field_report("unexpected_guest")["seconds"] == 40, "report isolated from caller mutation")
 	check(Campaign.select_operation("silent_archive"), "archive unlocked by hotel")
+	check(Campaign.operation_completed("unexpected_guest") and not Campaign.operation_completed("silent_archive"), "canonical operation status")
+	check(operations.scene_for("unknown").is_empty(), "unknown operation has no scene")
 	check(Campaign.can_accept_handler_contract(), "official offer available")
 	check(Campaign.accept_rook_contract(), "accept Rook contract before archive")
 	check(not Campaign.accept_handler_contract(), "Rook excludes official contract")
@@ -237,6 +239,7 @@ func check_archive_route(choice: String, expected: Vector3) -> void:
 		var extraction: Vector3 = mission.get("exit_point")
 		check(is_equal_approx(extraction.x, expected.x) and is_equal_approx(extraction.z, expected.z), choice + " matching extraction")
 		check(guard.get("patrol_points").size() == 4, "archive-specific patrol")
+		check(mission.get("operation_id") == "silent_archive", "archive mission identity")
 		var radio: Label = mission.get("radio_label")
 		check(is_instance_valid(radio), "archive radio exists")
 		if is_instance_valid(radio):

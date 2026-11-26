@@ -6,6 +6,13 @@ var feedback: Label
 var pending := false
 var cooldown := 0.0
 var feedback_time := 0.0
+const MAGAZINE_SIZE := 8
+const RELOAD_DURATION := 1.25
+var rounds := MAGAZINE_SIZE
+var reserve := 24
+var reload_remaining := 0.0
+var ammo_label: Label
+var reload_requested := false
 
 func _ready() -> void:
 	agent = get_parent() as CharacterBody3D
@@ -29,21 +36,62 @@ func _ready() -> void:
 	feedback.position = Vector2(24, 150)
 	feedback.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hud.add_child(feedback)
+	ammo_label = Label.new()
+	ammo_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud.add_child(ammo_label)
+	ammo_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	ammo_label.offset_left = -240
+	ammo_label.offset_right = -24
+	ammo_label.offset_top = -55
+	ammo_label.offset_bottom = -20
+	ammo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	ammo_label.add_theme_font_size_override("font_size", 22)
+	update_ammo()
 
 func request_shot() -> void:
 	pending = true
+
+func request_reload() -> void:
+	reload_requested = true
+
+func update_ammo() -> void:
+	ammo_label.text = "%02d / %02d" % [rounds, reserve]
+	if reload_remaining > 0.0:
+		ammo_label.text += "  RELOADING"
 
 func _physics_process(delta: float) -> void:
 	cooldown = maxf(0.0, cooldown - delta)
 	feedback_time = maxf(0.0, feedback_time - delta)
 	if feedback_time <= 0.0:
 		feedback.text = ""
+	var active := bool(agent.get("controls_enabled"))
 	var aiming: bool = agent.get("aiming")
-	reticle.visible = aiming
-	if pending and aiming and cooldown <= 0.0:
-		fire()
-		cooldown = 0.28
+	reticle.visible = aiming and active
+	if not active:
+		pending = false
+		reload_requested = false
+		reload_remaining = 0.0
+		update_ammo()
+		return
+	if reload_remaining > 0.0:
+		reload_remaining = maxf(0.0, reload_remaining - delta)
+		if reload_remaining <= 0.0:
+			var transferred := mini(MAGAZINE_SIZE - rounds, reserve)
+			rounds += transferred
+			reserve -= transferred
+	elif reload_requested and rounds < MAGAZINE_SIZE and reserve > 0:
+		reload_remaining = RELOAD_DURATION
+	elif pending and aiming and cooldown <= 0.0:
+		if rounds > 0:
+			rounds -= 1
+			fire()
+			cooldown = 0.28
+		else:
+			feedback.text = "EMPTY — R TO RELOAD" if reserve > 0 else "NO AMMO"
+			feedback_time = 0.65
 	pending = false
+	reload_requested = false
+	update_ammo()
 
 func fire() -> void:
 	var camera: Camera3D = agent.get("camera")

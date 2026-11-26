@@ -26,6 +26,10 @@ func _ready() -> void:
 	player.set_script(preload("res://scripts/agent.gd"))
 	player.position = Vector3(0, 0.05, 9)
 	add_child(player)
+	var mission := Node3D.new()
+	mission.name = "Mission"
+	mission.set_script(preload("res://scripts/mission.gd"))
+	add_child(mission)
 
 func build_shell() -> void:
 	box(Vector3(0, -0.15, 0), Vector3(12, 0.3, 24), STONE)

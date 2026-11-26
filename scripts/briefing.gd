@@ -108,16 +108,16 @@ func update_operation(index: int) -> void:
 	if operation == Operations.ARCHIVE:
 		if Campaign.owns_archive_intel():
 			operation_description.text += "\nRecon: records at the far end, guard patrols the central aisle."
-			intel_button.text = "Recon acquired · %d credits remaining" % Campaign.available_credits()
+			intel_button.text = "Recon acquired from %s · %d credits remaining" % [Campaign.archive_intel_source(), Campaign.available_credits()]
 			intel_button.disabled = true
 		else:
-			intel_button.text = "Purchase permanent recon (%d credits) · balance %d" % [Campaign.archive_intel_price(), Campaign.available_credits()]
+			intel_button.text = "%s recon (%d credits) · balance %d" % [Campaign.archive_intel_source(), Campaign.archive_intel_price(), Campaign.available_credits()]
 			intel_button.disabled = Campaign.save_blocked or Campaign.available_credits() < Campaign.archive_intel_price()
 
 func request_intel() -> void:
 	if transitioning or operation_ids[operation_selection.selected] != Operations.ARCHIVE or Campaign.owns_archive_intel():
 		return
-	intel_confirmation.dialog_text = "Spend %d credits to unlock the archive reconnaissance permanently?" % Campaign.archive_intel_price()
+	intel_confirmation.dialog_text = "Buy permanent archive reconnaissance from %s for %d credits?" % [Campaign.archive_intel_source(), Campaign.archive_intel_price()]
 	intel_confirmation.popup_centered()
 
 func purchase_intel() -> void:

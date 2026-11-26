@@ -59,6 +59,10 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Unspent specialization points can also be allocated from the next briefing, without replaying a completed mission. Confirming the permanent choice saves it immediately, even if deployment is subsequently cancelled. Failed saves retain the point. Check both briefing and debrief paths.
 
+## Operation catalog
+
+The first operation is now described through a shared catalog. A second operation, Silent Archive, has a prerequisite and branch-specific briefing defined, but is not exposed for deployment until its scene is implemented.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

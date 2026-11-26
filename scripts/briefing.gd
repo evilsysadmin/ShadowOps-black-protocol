@@ -1,6 +1,7 @@
 extends Control
 
 const HOTEL_SCENE := "res://scenes/hotel.tscn"
+const Operations = preload("res://scripts/operation_catalog.gd")
 const SAFEHOUSE_SCENE := "res://scenes/safehouse.tscn"
 var transitioning := false
 var error_label: Label
@@ -24,9 +25,9 @@ func _ready() -> void:
 	panel.add_theme_constant_override("separation", 10)
 	center.add_child(panel)
 	add_line(panel, "SHADOWOPS / OPERATIONS DIVISION", 18, Color(0.50, 0.80, 0.75))
-	add_line(panel, "UNEXPECTED GUEST", 36, Color(0.94, 0.94, 0.90))
+	add_line(panel, Operations.title_for(Operations.HOTEL), 36, Color(0.94, 0.94, 0.90))
 	add_line(panel, "BRIEFING  /  CLASSIFIED", 16, Color(0.75, 0.64, 0.43))
-	add_line(panel, "Recover the intelligence file at hotel reception and return to extraction. Avoid unnecessary confrontation. A security patrol may compromise the operation.", 20, Color(0.85, 0.89, 0.89))
+	add_line(panel, Operations.description_for(Operations.HOTEL, Campaign.intel_choice), 20, Color(0.85, 0.89, 0.89))
 	if not Campaign.intel_choice.is_empty():
 		add_line(panel, "REPLAY — Your original campaign decision will be preserved.", 17, Color(0.75, 0.64, 0.43))
 	agent_status = add_line(panel, "", 18, Color(0.66, 0.83, 0.80))

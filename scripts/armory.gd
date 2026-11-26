@@ -80,7 +80,7 @@ func refresh() -> void:
 		var button: Button = buttons[item]
 		var price := int(Campaign.EQUIPMENT_COSTS[item])
 		var owned := Campaign.owns_equipment(item)
-		button.text = "Owned · automatically equipped in field" if owned else "Purchase · %d credits" % price
+		button.text = "Owned · select in deployment briefing" if owned else "Purchase · %d credits" % price
 		button.disabled = owned or Campaign.save_blocked or Campaign.intel_choice.is_empty() or Campaign.available_credits() < price
 		if item == "quiet_kit" and not Campaign.independent_supplier_available():
 			button.text = "Locked · requires independent leverage"

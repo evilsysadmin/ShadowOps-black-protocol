@@ -208,6 +208,7 @@ func independent_leverage() -> int:
 
 # Deployment kit is session-local, independent of permanent progression.
 var deployment_kit := "standard"
+var deployment_equipment := ""
 const KITS := ["standard", "protection", "supplies"]
 
 func select_deployment_kit(kit: String) -> bool:
@@ -416,3 +417,12 @@ func record_relay(report: Dictionary) -> bool:
 		return true
 	var reports := reports_with(Operations.RELAY, report)
 	return write_campaign(intel_choice, specialization, archive_completed, reports, handler_agreement)
+
+func select_deployment_equipment(item: String) -> bool:
+	if not item.is_empty() and not owns_equipment(item):
+		return false
+	deployment_equipment = item
+	return true
+
+func equipment_active(item: String) -> bool:
+	return deployment_equipment == item and owns_equipment(item)

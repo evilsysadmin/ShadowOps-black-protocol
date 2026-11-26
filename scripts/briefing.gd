@@ -14,6 +14,8 @@ var operation_status: Label
 var intel_button: Button
 var intel_confirmation: ConfirmationDialog
 var kit_selection: OptionButton
+var equipment_selection: OptionButton
+var equipment_ids: Array[String] = [""]
 var kit_description: Label
 var agent_status: Label
 var specialization_row: HBoxContainer
@@ -68,15 +70,21 @@ func _ready() -> void:
 	kit_selection.item_selected.connect(update_kit_description)
 	kit_selection.select(0)
 	update_kit_description(0)
-	var bonuses: Array[String] = []
-	if Campaign.owns_equipment("light_armor"):
-		bonuses.append("+15 health")
-	if Campaign.owns_equipment("utility_rig"):
-		bonuses.append("+8 reserve rounds")
-	if Campaign.owns_equipment("quiet_kit"):
-		bonuses.append("+0.25 crouch speed")
-	if not bonuses.is_empty():
-		add_line(panel, "Owned equipment: " + ", ".join(bonuses), 16, Color(0.66, 0.83, 0.80))
+	if not Campaign.equipment_owned.is_empty():
+		equipment_selection = OptionButton.new()
+		equipment_selection.add_item("Equipment slot: none")
+		for item in Campaign.equipment_owned:
+			equipment_ids.append(item)
+			match item:
+				"light_armor":
+					equipment_selection.add_item("Light armor (+15 health)")
+				"utility_rig":
+					equipment_selection.add_item("Utility rig (+8 reserve rounds)")
+				"quiet_kit":
+					equipment_selection.add_item("Movement kit (+0.25 crouch speed)")
+		var previous := equipment_ids.find(Campaign.deployment_equipment)
+		equipment_selection.select(previous if previous >= 0 else 1)
+		panel.add_child(equipment_selection)
 	var audio_settings := HBoxContainer.new()
 	audio_settings.set_script(preload("res://scripts/audio_settings.gd"))
 	panel.add_child(audio_settings)
@@ -202,6 +210,10 @@ func _go(scene_path: String) -> void:
 	if transitioning:
 		return
 	if scene_path != SAFEHOUSE_SCENE:
+		var equipped := "" if not is_instance_valid(equipment_selection) else equipment_ids[equipment_selection.selected]
+		if not Campaign.select_deployment_equipment(equipped):
+			error_label.text = "Equipment selection unavailable."
+			return
 		if not Campaign.select_deployment_kit(Campaign.KITS[kit_selection.selected]):
 			error_label.text = "Invalid deployment kit."
 			return

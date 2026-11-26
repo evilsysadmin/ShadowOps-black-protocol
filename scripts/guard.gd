@@ -7,7 +7,8 @@ var mission: Node
 var waypoint := 1
 var suspicion := 0.0
 var health := 3
-var body: Node3D
+const VisualRig = preload("res://scripts/character_visual.gd")
+var body: VisualRig
 var status: Label3D
 var pause_time := 0.0
 var facing := Vector3.BACK
@@ -29,14 +30,9 @@ func _ready() -> void:
 	collider.shape = shape
 	collider.position.y = 0.9
 	add_child(collider)
-	body = Node3D.new()
+	body = VisualRig.new()
 	add_child(body)
-	part(Vector3(0, 1.24, 0), Vector3(0.52, 0.72, 0.33), Color(0.22, 0.28, 0.22))
-	part(Vector3(0, 1.69, 0), Vector3(0.25, 0.30, 0.25), Color(0.57, 0.42, 0.32))
-	part(Vector3(0, 1.82, 0), Vector3(0.29, 0.14, 0.29), Color(0.13, 0.17, 0.14))
-	for side in [-1.0, 1.0]:
-		part(Vector3(side * 0.14, 0.47, 0), Vector3(0.22, 0.86, 0.23), Color(0.11, 0.14, 0.12))
-		part(Vector3(side * 0.34, 1.20, 0), Vector3(0.19, 0.65, 0.20), Color(0.22, 0.28, 0.22))
+	body.build(Color(0.22, 0.28, 0.22), Color(0.11, 0.14, 0.12), true)
 	status = Label3D.new()
 	status.position.y = 2.05
 	status.font_size = 42
@@ -45,22 +41,11 @@ func _ready() -> void:
 	add_child(status)
 	update_status()
 
-func part(at: Vector3, size: Vector3, tint: Color) -> void:
-	var mesh := MeshInstance3D.new()
-	var geometry := SphereMesh.new()
-	geometry.radial_segments = 16
-	geometry.rings = 8
-	mesh.mesh = geometry
-	mesh.scale = size
-	mesh.position = at
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = tint
-	mesh.material_override = mat
-	body.add_child(mesh)
-
 func _physics_process(delta: float) -> void:
 	if health <= 0 or not bool(player.get("controls_enabled")):
 		velocity = Vector3.ZERO
+		if health > 0:
+			body.animate_pose(delta, 0.0, false, false)
 		return
 	attack_timer = maxf(0.0, attack_timer - delta)
 	var visible := sees_player()
@@ -102,6 +87,8 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 	move_and_slide()
+	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
+	body.animate_pose(delta, actual_speed, false, state == GuardState.ALERT and visible)
 	update_status()
 
 func face_player() -> void:

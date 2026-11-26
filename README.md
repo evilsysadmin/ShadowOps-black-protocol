@@ -47,6 +47,8 @@ Run `bash scripts/smoke.sh` before playtesting. Set `GODOT_BIN=/path/to/Godot` i
 
 - Briefing allows Standard (24 reserve), Protection (+25 maximum health, 16 reserve), or Supplies (40 reserve). Kits are selected per deployment, never alter the campaign save, and combine with existing specialization. Verify that the safehouse has no kit bonus and that deployment HUD matches the chosen kit.
 
+- Check articulated walk, sprint, crouch and aiming poses on the agent. Guard uses the same visual rig with distinct uniform, patrol animation and alert pose; test its defeat pose. These are procedural placeholders, not skinned character assets.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

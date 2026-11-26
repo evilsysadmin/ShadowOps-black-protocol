@@ -3,8 +3,8 @@ extends Node3D
 enum Stage { RECOVER, EXTRACT, COMPLETE, FAILED, DEBRIEF }
 enum IntelDecision { UNDECIDED, SHARE, RETAIN }
 var intel_decision: IntelDecision = IntelDecision.UNDECIDED
-var handler_trust := 0
-var independent_leverage := 0
+var campaign_replay := false
+var record_failed := false
 var decision_label: Label
 
 const INTEL_POINT := Vector3(-3.65, 1.38, -3.92)
@@ -20,6 +20,7 @@ var interact_requested := false
 
 func _ready() -> void:
 	player = get_parent().get_node("Agent") as CharacterBody3D
+	campaign_replay = not Campaign.intel_choice.is_empty()
 	intel = marker(INTEL_POINT, "INTEL", Color(0.28, 0.85, 0.78), false)
 	exit = marker(EXIT_POINT, "EXTRACTION", Color(0.93, 0.72, 0.31), true)
 	exit.hide()
@@ -125,13 +126,15 @@ func _physics_process(_delta: float) -> void:
 func resolve_intel(choice: IntelDecision) -> void:
 	if stage != Stage.DEBRIEF or intel_decision != IntelDecision.UNDECIDED:
 		return
+	var key := ""
 	if choice == IntelDecision.SHARE:
-		handler_trust += 1
+		key = "share"
 	elif choice == IntelDecision.RETAIN:
-		handler_trust -= 1
-		independent_leverage += 1
+		key = "retain"
 	else:
 		return
+	if not campaign_replay and not Campaign.record_intel(key):
+		record_failed = true
 	intel_decision = choice
 	stage = Stage.COMPLETE
 	refresh_objective()
@@ -165,10 +168,17 @@ func refresh_objective() -> void:
 			objective.text = "EXTRACTION COMPLETE | Incoming secure transmission"
 			prompt.text = "Choose who controls the information"
 			decision_label.text = "HANDLER: We need the full file. Can I count on you?\n\n[1] Share the file — earn trust\n[2] Retain the file — gain leverage, lose trust"
+			if campaign_replay:
+				decision_label.text += "\nReplay — campaign decision will not change"
 			decision_label.show()
 		Stage.COMPLETE:
 			objective.text = "OPERATION COMPLETE | Intel recovered and agent extracted"
-			decision_label.text = "HANDLER TRUST  %+d   |   INDEPENDENT LEVERAGE  %+d" % [handler_trust, independent_leverage]
+			if record_failed:
+				decision_label.text = "Choice made locally — campaign save unavailable"
+			else:
+				decision_label.text = "CAMPAIGN | HANDLER TRUST  %+d   |   LEVERAGE  %+d" % [Campaign.handler_trust(), Campaign.independent_leverage()]
+				if campaign_replay:
+					decision_label.text += "\nReplay choice not recorded; original decision preserved"
 			decision_label.show()
 			prompt.text = "Mission complete — press R to replay"
 		Stage.FAILED:

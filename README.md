@@ -75,7 +75,7 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Short text radio transmissions appear on deployment and objective recovery, reflecting the operation and original hotel decision. Independent archive routes use agent status messages rather than claiming handler support. Messages expire after five simulation seconds, pause with the mission and clear before debrief/failure. No recorded voices or new campaign state.
 
-- The campaign supports a one-time handler agreement after the hotel operation: coordination (+1 trust) or autonomy (-1 trust, +1 leverage). It persists independently of the original route decision, with old saves defaulting to no agreement. Conversation UI follows separately.
+- The campaign supports a one-time handler agreement after the hotel operation: coordination (+1 trust) or autonomy (-1 trust, +1 leverage). It persists independently of the original route decision, with old saves defaulting to no agreement. Open Secure conversation from FIELD RECORDS to review the offer, explicitly confirm a permanent choice, or return without changing anything. Reopening an agreed conversation is read-only.
 
 ## Development policy
 

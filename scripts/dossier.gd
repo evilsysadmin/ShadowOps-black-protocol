@@ -36,6 +36,12 @@ func _ready() -> void:
 			if completed:
 				line(panel, Handler.assessment(report), 16, Color(0.66, 0.83, 0.80))
 	line(panel, "Only the first recorded successful completion is archived.", 16, Color(0.64, 0.68, 0.70))
+	if not Campaign.intel_choice.is_empty():
+		var contact := Button.new()
+		contact.text = "Secure conversation" if Campaign.handler_agreement.is_empty() else "Review handler agreement"
+		contact.custom_minimum_size.y = 40
+		contact.pressed.connect(open_contact)
+		panel.add_child(contact)
 	var back := Button.new()
 	back.text = "Return to safehouse"
 	back.custom_minimum_size.y = 44
@@ -61,4 +67,11 @@ func go_back() -> void:
 		return
 	transitioning = true
 	if get_tree().change_scene_to_file(SAFEHOUSE) != OK:
+		transitioning = false
+
+func open_contact() -> void:
+	if transitioning:
+		return
+	transitioning = true
+	if get_tree().change_scene_to_file("res://scenes/contact.tscn") != OK:
 		transitioning = false

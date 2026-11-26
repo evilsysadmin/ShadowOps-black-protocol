@@ -37,6 +37,7 @@ run_checked --headless --path . --editor --import
 run_checked --headless --path . --quit-after 120
 run_checked --headless --path . res://scenes/briefing.tscn --quit-after 120
 run_checked --headless --path . res://scenes/dossier.tscn --quit-after 120
+run_checked --headless --path . res://scenes/contact.tscn --quit-after 120
 run_checked --headless --path . res://scenes/hotel.tscn --quit-after 120
 run_checked --headless --path . res://scenes/archive.tscn --quit-after 120
 run_checked --headless --path . res://tests/campaign_regression.tscn --quit-after 300

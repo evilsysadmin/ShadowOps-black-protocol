@@ -134,7 +134,7 @@ func _ready() -> void:
 func build_model() -> void:
 	model = VisualRig.new()
 	add_child(model)
-	model.build(SUIT, TROUSERS)
+	model.build(SUIT, TROUSERS, false, Campaign.deployment_equipment if field_mode and Campaign.equipment_active(Campaign.deployment_equipment) else "")
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not controls_enabled:

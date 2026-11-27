@@ -387,6 +387,8 @@ func check_relay_scene() -> void:
 		agent.set_physics_process(false)
 		guard.set_physics_process(false)
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
+		var accent := relay.get_node_or_null("RelayControlAccent") as OmniLight3D
+		check(is_instance_valid(accent) and not accent.shadow_enabled, "relay accent is non-shadow light")
 		var summary: Dictionary = mission.call("security_summary")
 		check(summary["count"] == 2 and not summary["alerted"] and summary["down"] == 0, "relay security roster")
 		var reserve := relay.get_node_or_null("GuardReserve") as CharacterBody3D

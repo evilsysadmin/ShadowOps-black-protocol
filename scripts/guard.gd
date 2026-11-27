@@ -26,6 +26,7 @@ const ATTACK_INTERVAL := 1.35
 const ATTACK_DAMAGE := 15
 
 func _ready() -> void:
+	add_to_group("field_security")
 	player = get_parent().get_node("Agent") as CharacterBody3D
 	mission = get_parent().get_node("Mission")
 	var collider := CollisionShape3D.new()

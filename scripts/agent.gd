@@ -332,7 +332,14 @@ func advance_distraction_feedback(delta: float) -> void:
 func use_distraction() -> bool:
 	if not field_mode or not controls_enabled or not distraction_available:
 		return false
-	var guard := get_parent().get_node_or_null("Guard")
+	var guard: Node3D = null
+	var nearest := INF
+	for member in get_parent().get_children():
+		if member is Node3D and member.is_in_group("field_security") and not member.is_queued_for_deletion() and int(member.get("health")) > 0:
+			var distance := global_position.distance_squared_to((member as Node3D).global_position)
+			if distance < nearest:
+				nearest = distance
+				guard = member as Node3D
 	if not is_instance_valid(guard) or not guard.has_method("request_distraction"):
 		show_distraction_feedback(false)
 		return false

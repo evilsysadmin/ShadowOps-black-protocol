@@ -360,6 +360,8 @@ func check_relay_scene() -> void:
 		agent.set_physics_process(false)
 		guard.set_physics_process(false)
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
+		var summary: Dictionary = mission.call("security_summary")
+		check(summary["count"] == 1 and not summary["alerted"] and summary["down"] == 0, "single guard roster summary")
 		check(bool(guard.call("request_distraction")), "guard can investigate before agent request")
 		check(not bool(agent.call("use_distraction")) and bool(agent.get("distraction_available")), "rejected use retains charge")
 		var gadget_label: Label = agent.get("distraction_label")

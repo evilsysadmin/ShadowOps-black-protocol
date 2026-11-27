@@ -61,8 +61,9 @@ func _ready() -> void:
 	voice.unit_size = 3.0
 	voice.max_distance = 24.0
 	add_child(voice)
-	refresh_volume()
+	voice.volume_db = linear_to_db(maxf(GameSettings.ambient_volume, 0.0001))
 	voice.play()
+	refresh_volume()
 
 func _process(_delta: float) -> void:
 	refresh_volume()

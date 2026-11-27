@@ -1,5 +1,6 @@
 extends Node3D
 
+const SceneAmbience = preload("res://scripts/scene_ambience.gd")
 const Operations = preload("res://scripts/operation_catalog.gd")
 const Handler = preload("res://scripts/handler_dialogue.gd")
 var radio_label: Label
@@ -33,6 +34,11 @@ var interact_requested := false
 
 func _ready() -> void:
 	player = get_parent().get_node("Agent") as CharacterBody3D
+	var ambience := SceneAmbience.new()
+	ambience.name = "SceneAmbience"
+	ambience.profile = SceneAmbience.profile_for(operation_id)
+	ambience.position = Vector3(0, 2.4, -3.0)
+	add_child(ambience)
 	campaign_replay = Campaign.operation_completed(operation_id)
 	intel = marker(intel_point, "DRIVE" if operation_id == Operations.RELAY else ("LEDGER" if operation_id == Operations.ARCHIVE else "INTEL"), Color(0.28, 0.85, 0.78), false)
 	exit = marker(exit_point, "EXTRACTION", Color(0.93, 0.72, 0.31), true)

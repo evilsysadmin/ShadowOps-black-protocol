@@ -125,6 +125,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Audio settings now persist independent effects and ambience volumes using one atomic settings-file write. Both pause and briefing expose separate sliders with explicit Save audio; old settings files default ambience to 35%. This prepares the ambient sound layer without altering existing effect playback. Regression covers independent saves, bounds and nonfinite rejection.
 
+- All four 3D scenes now have original locally synthesized periodic ambience, spatially emitted from a scene-owned AudioStreamPlayer3D. Hotel, archive, relay and safehouse have distinct low-frequency tonal profiles. The loop has no external assets, follows the independently saved ambience volume, mutes at zero and is owned by the scene lifecycle. Regression checks loop bounds, zero volume and relay profile. This is a provisional room-tone layer, not a musical soundtrack; listening and performance checks remain pending.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

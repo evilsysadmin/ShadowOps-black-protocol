@@ -271,6 +271,11 @@ func security_roster() -> Array[Node]:
 			result.append(member)
 	return result
 
+func notify_security_alert(source: Node) -> void:
+	for member in security_roster():
+		if member != source and member.has_method("receive_security_alert"):
+			member.call("receive_security_alert")
+
 func security_summary() -> Dictionary:
 	var roster := security_roster()
 	var alerted := false

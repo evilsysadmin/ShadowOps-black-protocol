@@ -95,11 +95,25 @@ func update_detection(delta: float, player_crouched: bool) -> void:
 		enter_alert(true)
 
 func enter_alert(reset_attack: bool) -> void:
+	var first_alert := not ever_alerted
 	state = GuardState.ALERT
 	ever_alerted = true
 	suspicion = 1.0
 	if reset_attack:
 		attack_timer = ATTACK_INTERVAL
+	if first_alert and is_instance_valid(mission):
+		mission.call("notify_security_alert", self)
+
+# A shared alert changes readiness, not personal perception or remembered positions.
+func receive_security_alert() -> void:
+	if health <= 0 or state == GuardState.ALERT or ever_alerted:
+		return
+	ever_alerted = true
+	has_last_seen = false
+	begin_search(true)
+	attack_timer = ATTACK_INTERVAL
+	if is_instance_valid(status):
+		update_status()
 
 # Fictional one-charge gadget: causes a temporary investigation, never erases alert history.
 func request_distraction() -> bool:

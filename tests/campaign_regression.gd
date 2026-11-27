@@ -361,7 +361,11 @@ func check_relay_scene() -> void:
 		guard.set_physics_process(false)
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
 		var summary: Dictionary = mission.call("security_summary")
-		check(summary["count"] == 1 and not summary["alerted"] and summary["down"] == 0, "single guard roster summary")
+		check(summary["count"] == 2 and not summary["alerted"] and summary["down"] == 0, "relay security roster")
+		var reserve := relay.get_node_or_null("GuardReserve") as CharacterBody3D
+		check(is_instance_valid(reserve), "second relay guard exists")
+		if is_instance_valid(reserve):
+			reserve.set_physics_process(false)
 		check(bool(guard.call("request_distraction")), "guard can investigate before agent request")
 		check(not bool(agent.call("use_distraction")) and bool(agent.get("distraction_available")), "rejected use retains charge")
 		var gadget_label: Label = agent.get("distraction_label")
@@ -384,5 +388,13 @@ func check_relay_scene() -> void:
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		check(bool(mission.call("can_reach", mission.get("intel_point"))), "relay drive reachable")
+		if is_instance_valid(reserve):
+			guard.call("enter_alert", true)
+			check(bool(reserve.get("ever_alerted")) and not bool(reserve.get("has_last_seen")), "shared alert without shared position")
+			reserve.call("receive_hit", 3)
+			var aggregate: Dictionary = mission.call("security_summary")
+			check(aggregate["count"] == 2 and aggregate["down"] == 1 and aggregate["alerted"], "aggregate security state")
+			var report: Dictionary = mission.call("measure_field_report")
+			check(report.get("alerted", false) and report.get("guard_down", false), "canonical report aggregates both guards")
 	relay.queue_free()
 	await get_tree().process_frame

@@ -255,6 +255,19 @@ func run_regression() -> void:
 	await get_tree().physics_frame
 	var home_agent := safehouse.get_node_or_null("Agent")
 	check(is_instance_valid(home_agent), "safehouse agent exists")
+	var ambience := safehouse.get_node_or_null("SceneAmbience")
+	check(is_instance_valid(ambience), "safehouse ambience exists")
+	if is_instance_valid(ambience):
+		var voice: AudioStreamPlayer3D = ambience.get("voice")
+		var stream := voice.stream as AudioStreamWAV
+		check(stream.loop_mode == AudioStreamWAV.LOOP_FORWARD and stream.loop_end * 2 == stream.data.size(), "ambient loop has complete sample range")
+		var old_volume := GameSettings.ambient_volume
+		GameSettings.ambient_volume = 0.0
+		ambience.call("refresh_volume")
+		check(voice.stream_paused, "ambient zero mutes playback")
+		GameSettings.ambient_volume = old_volume
+		ambience.call("refresh_volume")
+		check(voice.stream_paused == (old_volume <= 0.0), "ambient volume restored")
 	var station_lights: Array = safehouse.get("station_lights")
 	check(station_lights.size() == 3, "safehouse has three station indicators")
 	if station_lights.size() == 3:
@@ -405,6 +418,8 @@ func check_relay_scene() -> void:
 		agent.set_physics_process(false)
 		guard.set_physics_process(false)
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
+		var ambience := mission.get_node_or_null("SceneAmbience")
+		check(is_instance_valid(ambience) and ambience.get("profile") == "relay", "relay uses its ambient profile")
 		var accent := relay.get_node_or_null("RelayControlAccent") as OmniLight3D
 		check(is_instance_valid(accent) and not accent.shadow_enabled, "relay accent is non-shadow light")
 		var dimensions := Vector3(0.1, 0.1, 0.1)

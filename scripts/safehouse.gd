@@ -75,6 +75,10 @@ func _ready() -> void:
 	sign_label.pixel_size = 0.006
 	add_child(sign_label)
 	build_visual_details()
+	var ambience := preload("res://scripts/scene_ambience.gd").new()
+	ambience.name = "SceneAmbience"
+	ambience.position = Vector3(0, 2.5, -3.2)
+	add_child(ambience)
 	player = CharacterBody3D.new()
 	player.name = "Agent"
 	player.set_script(preload("res://scripts/agent.gd"))

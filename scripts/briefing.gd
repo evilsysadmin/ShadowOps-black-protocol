@@ -85,7 +85,7 @@ func _ready() -> void:
 		var previous := equipment_ids.find(Campaign.deployment_equipment)
 		equipment_selection.select(previous if previous >= 0 else 1)
 		panel.add_child(equipment_selection)
-	var audio_settings := HBoxContainer.new()
+	var audio_settings := VBoxContainer.new()
 	audio_settings.set_script(preload("res://scripts/audio_settings.gd"))
 	panel.add_child(audio_settings)
 	var actions := HBoxContainer.new()

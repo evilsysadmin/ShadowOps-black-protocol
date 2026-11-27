@@ -103,6 +103,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Distraction feedback now distinguishes rejected (charge retained), deployed and spent states. Temporary messages expire using simulation time, with a synthesized interface cue on success that respects effects volume. Guard status updates immediately on acceptance. Local regression covers both message lifecycles.
 
+- Field security is scoped to each mission's direct guard children, not a single hardcoded name. Reports aggregate any confirmed alert and any guard down while retaining the six-field save contract. Live debriefs show the number down out of the roster. The one-charge distraction targets the nearest living guard only and retains its charge if rejected. No additional guards in this refactor.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

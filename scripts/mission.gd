@@ -264,18 +264,35 @@ func refresh_objective() -> void:
 			objective.text = "OPERATION FAILED | Agent incapacitated"
 			prompt.text = "Compromised — press R to return to safehouse"
 
+func security_roster() -> Array[Node]:
+	var result: Array[Node] = []
+	for member in get_parent().get_children():
+		if member.is_in_group("field_security") and not member.is_queued_for_deletion():
+			result.append(member)
+	return result
+
+func security_summary() -> Dictionary:
+	var roster := security_roster()
+	var alerted := false
+	var down := 0
+	for member in roster:
+		alerted = alerted or bool(member.get("ever_alerted"))
+		if int(member.get("health")) <= 0:
+			down += 1
+	return {"count": roster.size(), "alerted": alerted, "down": down}
+
 func measure_field_report() -> Dictionary:
 	var combat: Node = player.get("combat")
-	var guard := get_parent().get_node_or_null("Guard")
-	if not is_instance_valid(guard) or not is_instance_valid(combat):
+	var security := security_summary()
+	if int(security["count"]) == 0 or not is_instance_valid(combat):
 		return {}
 	return {
 		"seconds": int(elapsed_seconds),
 		"damage": maxi(0, int(player.get("maximum_health")) - int(player.get("health"))),
 		"shots": int(combat.get("shots_fired")),
 		"hits": int(combat.get("target_hits")),
-		"alerted": bool(guard.get("ever_alerted")),
-		"guard_down": int(guard.get("health")) <= 0
+		"alerted": bool(security["alerted"]),
+		"guard_down": int(security["down"]) > 0
 	}
 
 func refresh_report() -> void:
@@ -283,14 +300,11 @@ func refresh_report() -> void:
 	var shots := int(combat.get("shots_fired"))
 	var hits := int(combat.get("target_hits"))
 	var damage := maxi(0, int(player.get("maximum_health")) - int(player.get("health")))
-	var guard := get_parent().get_node_or_null("Guard")
+	var summary := security_summary()
 	var security := "Unavailable"
-	if is_instance_valid(guard):
-		var alerted := bool(guard.get("ever_alerted"))
-		var down := int(guard.get("health")) <= 0
-		security = "Alerted" if alerted else "No full alert"
-		if down:
-			security += " / guard down"
+	if int(summary["count"]) > 0:
+		security = "Alerted" if bool(summary["alerted"]) else "No full alert"
+		security += " / %d of %d guards down" % [summary["down"], summary["count"]]
 	var accuracy := "—" if shots == 0 else "%d%%" % roundi(100.0 * float(hits) / float(shots))
 	report_label.text = "FIELD REPORT\nElapsed: %d s · Damage: %d\nShots: %d · Target accuracy: %s\nSecurity: %s" % [int(elapsed_seconds), damage, shots, accuracy, security]
 	if operation_id == Operations.ARCHIVE and stage == Stage.COMPLETE and not record_failed:

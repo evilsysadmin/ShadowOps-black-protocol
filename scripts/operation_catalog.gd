@@ -39,7 +39,7 @@ static func report_summary(completed: bool, report: Dictionary) -> String:
 	var shots := int(report["shots"])
 	var accuracy := "—" if shots == 0 else "%d%%" % roundi(100.0 * float(report["hits"]) / float(shots))
 	var security := "Full alert" if report["alerted"] else "No full alert"
-	security += " / guard down" if report["guard_down"] else " / guard active"
+	security += " / at least one guard down" if report["guard_down"] else " / no guards down"
 	return "%d s · %d damage · %d shots · %s accuracy\n%s" % [report["seconds"], report["damage"], shots, accuracy, security]
 
 static func scene_for(operation: String) -> String:

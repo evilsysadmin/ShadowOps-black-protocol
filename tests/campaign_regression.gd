@@ -307,6 +307,8 @@ func check_archive_route(choice: String, expected: Vector3) -> void:
 		check(is_equal_approx(extraction.x, expected.x) and is_equal_approx(extraction.z, expected.z), choice + " matching extraction")
 		check(guard.get("patrol_points").size() == 4, "archive-specific patrol")
 		check(mission.get("operation_id") == "silent_archive", "archive mission identity")
+		var accent := archive.get_node_or_null("RecordsAccent") as OmniLight3D
+		check(is_instance_valid(accent) and not accent.shadow_enabled, "archive records accent exists without shadow cost")
 		var radio: Label = mission.get("radio_label")
 		check(is_instance_valid(radio), "archive radio exists")
 		if is_instance_valid(radio):

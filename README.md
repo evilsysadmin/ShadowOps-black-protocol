@@ -117,6 +117,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Night Relay art pass: panelized server faces, warm and cool status accents, floor seams and aisle markings, wall trim, control displays and a single shadow-enabled main lamp plus non-shadow accent. All added meshes are render-only. Existing collision layout, objective coordinates and patrol routes are unchanged. Visual quality and frame rate require local Godot validation.
 
+- Silent Archive art pass differentiates its filing shelves with paper/folder face panels, labels, trim, floor seams and a warmer records-desk accent against the cool ambient lighting. A single main lamp casts shadows. Added details are non-colliding; routes and mission geometry are unchanged. Local regression checks the accent light; visual quality and performance remain pending.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

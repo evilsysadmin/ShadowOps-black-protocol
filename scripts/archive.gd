@@ -3,6 +3,9 @@ extends Node3D
 const STONE := Color(0.21, 0.25, 0.28)
 const STEEL := Color(0.14, 0.19, 0.22)
 const LIGHT := Color(0.57, 0.82, 0.87)
+const PAPER := Color(0.63, 0.59, 0.47)
+const FOLDER := Color(0.35, 0.30, 0.23)
+const BRONZE := Color(0.61, 0.47, 0.29)
 const ASSISTED_SPAWN := Vector3(-5.5, 0.05, -3.5)
 const INDEPENDENT_SPAWN := Vector3(5.5, 0.05, 7.0)
 const LEDGER_POINT := Vector3(-3.0, 1.10, -5.75)
@@ -35,9 +38,11 @@ func _ready() -> void:
 		light.position = Vector3(0, 3.0, z)
 		light.light_color = LIGHT
 		light.light_energy = 2.8
+		light.shadow_enabled = z == 0.0
 		light.omni_range = 9.0
 		add_child(light)
 		block(Vector3(0, 3.32, z), Vector3(3.0, 0.07, 0.17), LIGHT, false, true)
+	build_visual_details()
 	var assisted := Campaign.intel_choice == "share"
 	var spawn := ASSISTED_SPAWN if assisted else INDEPENDENT_SPAWN
 	add_wayfinding(assisted)
@@ -60,6 +65,34 @@ func _ready() -> void:
 	var route: Array[Vector3] = [Vector3(0, 0, -6), Vector3(0, 0, 5), Vector3(2, 0, 5), Vector3(0, 0, 5)]
 	guard.set("patrol_points", route)
 	add_child(guard)
+
+func build_visual_details() -> void:
+	# Archive shelves remain solid; thin face panels and labels are decorative only.
+	for x in [-4.4, 4.4]:
+		for z in [-1.8, 1.8]:
+			var front := x - signf(x) * 0.51
+			for y in [0.4, 1.0, 1.6]:
+				for i in range(5):
+					var file_z := z - 0.96 + float(i) * 0.48
+					var tint := PAPER if i % 2 == 0 else FOLDER
+					block(Vector3(front, y + 0.23, file_z), Vector3(0.035, 0.35, 0.39), tint, false)
+					block(Vector3(front - signf(x) * 0.024, y + 0.27, file_z), Vector3(0.012, 0.055, 0.22), BRONZE, false)
+			for edge in [-1.20, 1.20]:
+				block(Vector3(front, 1.05, z + edge), Vector3(0.045, 2.08, 0.06), STEEL, false)
+	for side in [-1.0, 1.0]:
+		block(Vector3(side * 6.84, 0.16, 0), Vector3(0.045, 0.25, 17.6), STEEL, false)
+		block(Vector3(side * 6.83, 2.6, 0), Vector3(0.04, 0.07, 17.6), BRONZE, false)
+	for z in range(-8, 9, 2):
+		block(Vector3(0, 0.004, float(z)), Vector3(13.7, 0.008, 0.025), STEEL, false)
+	block(Vector3(-3.0, 1.02, -6.4), Vector3(1.84, 0.025, 0.77), FOLDER, false)
+	block(Vector3(-3.58, 1.06, -6.37), Vector3(0.34, 0.04, 0.27), PAPER, false)
+	var accent := OmniLight3D.new()
+	accent.name = "RecordsAccent"
+	accent.position = Vector3(-3.0, 2.45, -6.4)
+	accent.light_color = Color(1.0, 0.74, 0.43)
+	accent.light_energy = 0.75
+	accent.omni_range = 3.8
+	add_child(accent)
 
 func add_wayfinding(assisted: bool) -> void:
 	var entry := Label3D.new()
@@ -88,6 +121,8 @@ func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow :=
 	mesh.mesh = geometry
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = tint
+	mat.roughness = 0.92 if tint == PAPER or tint == FOLDER else 0.72
+	mat.metallic = 0.2 if tint == STEEL or tint == BRONZE else 0.0
 	if glow:
 		mat.emission_enabled = true
 		mat.emission = tint

@@ -26,6 +26,8 @@ var player: CharacterBody3D
 var intel: Node3D
 var exit: Node3D
 var objective: Label
+var security_label: Label
+var alert_announced := false
 var prompt: Label
 var interact_requested := false
 
@@ -42,6 +44,12 @@ func _ready() -> void:
 	objective.position = Vector2(24, 108)
 	objective.add_theme_color_override("font_color", Color(0.66, 0.94, 0.90))
 	hud.add_child(objective)
+	security_label = Label.new()
+	security_label.position = Vector2(24, 130)
+	security_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	security_label.add_theme_color_override("font_color", Color(0.75, 0.89, 0.85))
+	security_label.text = "SECURITY | No full alert recorded"
+	hud.add_child(security_label)
 	prompt = Label.new()
 	hud.add_child(prompt)
 	prompt.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
@@ -231,6 +239,7 @@ func can_reach(target: Vector3) -> bool:
 func refresh_objective() -> void:
 	if stage == Stage.DEBRIEF or stage == Stage.COMPLETE or stage == Stage.FAILED:
 		clear_radio()
+		security_label.hide()
 		refresh_report()
 	match stage:
 		Stage.RECOVER:
@@ -272,6 +281,11 @@ func security_roster() -> Array[Node]:
 	return result
 
 func notify_security_alert(source: Node) -> void:
+	if not alert_announced:
+		alert_announced = true
+		if is_instance_valid(security_label):
+			security_label.text = "SECURITY | Full alert recorded"
+			security_label.add_theme_color_override("font_color", Color(1.0, 0.45, 0.32))
 	for member in security_roster():
 		if member != source and member.has_method("receive_security_alert"):
 			member.call("receive_security_alert")

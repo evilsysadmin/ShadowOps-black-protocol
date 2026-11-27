@@ -194,6 +194,9 @@ func run_regression() -> void:
 		check(not probe.search_moving and is_zero_approx(probe.velocity.x), "search scans after arrival")
 		probe.advance_search(5.0, Vector3(2, 0, 0))
 		check(probe.state == guard_script.GuardState.PATROL and not probe.has_last_seen and probe.ever_alerted, "search expires without clearing alert history")
+		check(is_zero_approx(guard_script.forward_progress(Vector3.RIGHT, Vector3.BACK)), "sideways sliding is not waypoint progress")
+		check(is_zero_approx(guard_script.forward_progress(Vector3.RIGHT, Vector3.LEFT)), "backward movement is not progress")
+		check(is_equal_approx(guard_script.forward_progress(Vector3.RIGHT, Vector3(1, 4, 2)), 1.0), "only forward planar velocity counts")
 		var initial_waypoint: int = probe.waypoint
 		probe.observe_patrol_progress(0.6, true, 0.0)
 		check(probe.waypoint == initial_waypoint, "transient stall does not skip waypoint")

@@ -81,9 +81,11 @@ func _physics_process(delta: float) -> void:
 	else:
 		velocity.y = 0.0
 	var patrol_commanded := not visible and state in [GuardState.PATROL, GuardState.SUSPICIOUS] and Vector2(velocity.x, velocity.z).length() > 0.1
+	var commanded_motion := Vector3(velocity.x, 0, velocity.z)
 	move_and_slide()
-	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
-	observe_patrol_progress(delta, patrol_commanded, actual_speed)
+	var actual_motion := get_real_velocity()
+	var actual_speed := Vector2(actual_motion.x, actual_motion.z).length()
+	observe_patrol_progress(delta, patrol_commanded, forward_progress(commanded_motion, actual_motion))
 	body.animate_pose(delta, actual_speed, false, state == GuardState.ALERT and visible)
 	update_status()
 
@@ -194,9 +196,14 @@ func patrol(delta: float) -> void:
 	velocity.x = facing.x * SPEED
 	velocity.z = facing.z * SPEED
 
+# Sideways sliding or backward displacement is not progress toward the waypoint.
+static func forward_progress(commanded: Vector3, actual: Vector3) -> float:
+	var direction := Vector3(commanded.x, 0, commanded.z).normalized()
+	return maxf(0.0, direction.dot(Vector3(actual.x, 0, actual.z)))
+
 # Recover a stalled authored waypoint without teleporting or bypassing collisions.
-func observe_patrol_progress(delta: float, commanded: bool, actual_speed: float) -> void:
-	if not commanded or actual_speed >= SPEED * 0.2 or patrol_points.size() < 2:
+func observe_patrol_progress(delta: float, commanded: bool, progress_speed: float) -> void:
+	if not commanded or progress_speed >= SPEED * 0.2 or patrol_points.size() < 2:
 		patrol_stall_time = 0.0
 		return
 	patrol_stall_time += maxf(0.0, delta)

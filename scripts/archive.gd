@@ -1,5 +1,10 @@
 extends Node3D
 
+# Scene-local immutable resources shared by identical decorative and solid blocks.
+var box_mesh_cache: Dictionary = {}
+var opaque_material_cache: Dictionary = {}
+var emissive_material_cache: Dictionary = {}
+
 const STONE := Color(0.21, 0.25, 0.28)
 const STEEL := Color(0.14, 0.19, 0.22)
 const LIGHT := Color(0.57, 0.82, 0.87)
@@ -116,17 +121,12 @@ func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow :=
 	root.position = at
 	add_child(root)
 	var mesh := MeshInstance3D.new()
-	var geometry := BoxMesh.new()
-	geometry.size = dimensions
-	mesh.mesh = geometry
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = tint
-	mat.roughness = 0.92 if tint == PAPER or tint == FOLDER else 0.72
-	mat.metallic = 0.2 if tint == STEEL or tint == BRONZE else 0.0
-	if glow:
-		mat.emission_enabled = true
-		mat.emission = tint
-	mesh.material_override = mat
+	if not box_mesh_cache.has(dimensions):
+		var geometry := BoxMesh.new()
+		geometry.size = dimensions
+		box_mesh_cache[dimensions] = geometry
+	mesh.mesh = box_mesh_cache[dimensions]
+	mesh.material_override = block_material(tint, glow)
 	root.add_child(mesh)
 	if solid:
 		var collider := CollisionShape3D.new()
@@ -135,3 +135,17 @@ func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow :=
 		collider.shape = bounds
 		root.add_child(collider)
 	return root
+
+func block_material(tint: Color, glow: bool) -> StandardMaterial3D:
+	var materials := emissive_material_cache if glow else opaque_material_cache
+	if materials.has(tint):
+		return materials[tint] as StandardMaterial3D
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tint
+	mat.roughness = 0.92 if tint == PAPER or tint == FOLDER else 0.72
+	mat.metallic = 0.2 if tint == STEEL or tint == BRONZE else 0.0
+	if glow:
+		mat.emission_enabled = true
+		mat.emission = tint
+	materials[tint] = mat
+	return mat

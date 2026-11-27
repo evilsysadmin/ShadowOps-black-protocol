@@ -13,8 +13,9 @@ var aim_blend := 0.0
 var shot_pose := 0.0
 var reload_pose := 0.0
 var held_prop: Node3D
+var outfit: Node3D
 
-func build(uniform: Color, trousers: Color, security := false) -> void:
+func build(uniform: Color, trousers: Color, security := false, equipment := "") -> void:
 	var cloth := make_material(uniform)
 	var pants := make_material(trousers)
 	var skin := make_material(Color(0.58, 0.39, 0.29))
@@ -32,11 +33,25 @@ func build(uniform: Color, trousers: Color, security := false) -> void:
 	ellipsoid(torso, Vector3(0, 0.76, 0), Vector3(0.235, 0.29, 0.235), skin)
 	ellipsoid(torso, Vector3(0, 0.83, 0.025), Vector3(0.24, 0.16, 0.23), leather)
 	ellipsoid(torso, Vector3(0, 0.74, -0.111), Vector3(0.055, 0.07, 0.065), skin)
+	# Low-poly facial and clothing accents, readable from close camera views.
+	var dark := make_material(Color(0.12, 0.10, 0.09))
+	for side in [-1.0, 1.0]:
+		ellipsoid(torso, Vector3(side * 0.116, 0.755, 0.006), Vector3(0.035, 0.073, 0.04), skin)
+		ellipsoid(torso, Vector3(side * 0.047, 0.779, -0.112), Vector3(0.035, 0.015, 0.017), dark)
+		ellipsoid(torso, Vector3(side * 0.19, 0.43, 0), Vector3(0.09, 0.19, 0.29), cloth)
+	cuboid(torso, Vector3(0, 0.699, -0.111), Vector3(0.055, 0.009, 0.012), dark)
 	if security:
 		cuboid(torso, Vector3(-0.13, 0.45, -0.157), Vector3(0.075, 0.09, 0.02), trim)
+		cuboid(torso, Vector3(0, 0.37, 0.17), Vector3(0.29, 0.28, 0.08), leather)
+		cuboid(torso, Vector3(0, 0.832, -0.14), Vector3(0.22, 0.025, 0.13), leather)
 		ellipsoid(torso, Vector3(0, 0.85, 0), Vector3(0.29, 0.11, 0.29), cloth)
 	else:
 		cuboid(torso, Vector3(0, 0.49, -0.155), Vector3(0.115, 0.20, 0.025), shirt)
+		for side in [-1.0, 1.0]:
+			var lapel := joint(torso, Vector3(side * 0.085, 0.47, -0.164))
+			lapel.rotation.z = side * 0.28
+			cuboid(lapel, Vector3.ZERO, Vector3(0.065, 0.21, 0.025), leather)
+		cuboid(torso, Vector3(0, 0.43, -0.178), Vector3(0.036, 0.17, 0.025), dark)
 	for side in [-1.0, 1.0]:
 		var thigh := joint(hips, Vector3(side * 0.125, 0, 0))
 		thighs.append(thigh)
@@ -59,6 +74,22 @@ func build(uniform: Color, trousers: Color, security := false) -> void:
 	cuboid(held_prop, Vector3(0, -0.075, 0), Vector3(0.065, 0.22, 0.10), trim)
 	cuboid(held_prop, Vector3(0, 0.015, 0.025), Vector3(0.065, 0.10, 0.09), leather)
 	held_prop.hide()
+	outfit = joint(torso, Vector3.ZERO)
+	outfit.name = "FieldOutfit"
+	match equipment:
+		"light_armor":
+			cuboid(outfit, Vector3(0, 0.36, -0.19), Vector3(0.36, 0.32, 0.095), leather)
+			cuboid(outfit, Vector3(0, 0.36, 0.18), Vector3(0.37, 0.34, 0.09), leather)
+			for side in [-1.0, 1.0]:
+				cuboid(outfit, Vector3(side * 0.16, 0.55, 0), Vector3(0.065, 0.055, 0.34), trim)
+		"utility_rig":
+			for side in [-1.0, 1.0]:
+				cuboid(outfit, Vector3(side * 0.17, 0.19, 0.05), Vector3(0.14, 0.15, 0.15), leather)
+			cuboid(outfit, Vector3(0, 0.28, 0.22), Vector3(0.27, 0.27, 0.16), leather)
+		"quiet_kit":
+			for side in [-1.0, 1.0]:
+				cuboid(outfit, Vector3(side * 0.19, 0.24, 0.04), Vector3(0.075, 0.14, 0.19), trim)
+			cuboid(outfit, Vector3(0, 0.50, 0.18), Vector3(0.18, 0.10, 0.07), leather)
 
 func trigger_shot() -> void:
 	shot_pose = 1.0

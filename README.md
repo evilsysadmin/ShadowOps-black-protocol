@@ -111,6 +111,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - The mission HUD displays whether a full alert has been recorded during the current deployment. It changes on a confirmed incident, persists through subsequent searches and hides at the terminal report. It does not expose guard locations or unobserved suspicion. Local regression verifies confirmed alert feedback and historical continuity.
 
+- Procedural character models gain facial features, suit lapels and distinct security uniform details. The selected armor, utility rig or movement kit has a separate visual silhouette, applied only to field deployments. Geometry is presentation-only and does not change collision or combat attributes. Local regression checks armor and safehouse outfit separation; visual review remains pending.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

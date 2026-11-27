@@ -160,6 +160,8 @@ func run_regression() -> void:
 			var mark: MeshInstance3D = combat.get("impact_mark")
 			check(is_instance_valid(mark) and mark.get_parent() == combat, "impact marker owned by combat node")
 		var visual: Node3D = agent.get("model")
+		var outfit: Node3D = visual.get("outfit")
+		check(is_instance_valid(outfit) and outfit.get_child_count() == 4, "selected armor has distinct visual outfit")
 		visual.call("trigger_shot")
 		check(is_equal_approx(float(visual.get("shot_pose")), 1.0), "shot triggers visual pulse")
 		visual.call("animate_pose", 0.2, 0.0, false, true, false)
@@ -247,6 +249,9 @@ func run_regression() -> void:
 	if is_instance_valid(home_agent):
 		check(int(home_agent.get("maximum_health")) == 120, "kit not applied in safehouse")
 		check(home_agent.get("combat") == null, "safehouse combat disabled")
+		var home_visual: Node3D = home_agent.get("model")
+		var home_outfit: Node3D = home_visual.get("outfit")
+		check(home_outfit.get_child_count() == 0, "safehouse excludes field outfit")
 		check(not bool(home_agent.call("use_distraction")), "safehouse distraction disabled")
 		var menu: CanvasLayer = home_agent.get("pause_menu")
 		check(is_instance_valid(menu), "pause menu exists")

@@ -105,7 +105,7 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Field security is scoped to each mission's direct guard children, not a single hardcoded name. Reports aggregate any confirmed alert and any guard down while retaining the six-field save contract. Live debriefs show the number down out of the roster. The one-charge distraction targets the nearest living guard only and retains its charge if rejected. No additional guards in this refactor.
 
-- Night Relay includes a second independent guard. The first confirmed alert notifies other living guards in the same mission, raising readiness without granting the player's position or sharing visual memory. No recursive alert broadcast; guard state and aggregate report regressions added. Earlier operations retain their original guard counts. The second patrol and balance are provisional until local playtesting.
+- Night Relay includes a second independent guard. Each new confirmed alert episode notifies other living guards in the same mission, raising readiness without granting the player's position or sharing visual memory. No recursive alert broadcast or per-frame refresh; a new incident can notify guards after an earlier search expires; guard state and aggregate report regressions added. Earlier operations retain their original guard counts. The second patrol and balance are provisional until local playtesting.
 
 ## Development policy
 

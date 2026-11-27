@@ -115,6 +115,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Shared procedural locomotion gains ankle joints with bounded foot counter-rotation, subtle body sway while walking, and an idle breathing cycle that fades during aiming, movement and reload. Animation is visual only and uses the existing real movement speed and combat state. Regression checks joint count, rotation bounds and idle settling. No authored skeletal assets or runtime visual validation yet.
 
+- Night Relay art pass: panelized server faces, warm and cool status accents, floor seams and aisle markings, wall trim, control displays and a single shadow-enabled main lamp plus non-shadow accent. All added meshes are render-only. Existing collision layout, objective coordinates and patrol routes are unchanged. Visual quality and frame rate require local Godot validation.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

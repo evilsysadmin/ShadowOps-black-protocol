@@ -5,6 +5,9 @@ const FLOOR := Color(0.27, 0.28, 0.29)
 const RACK := Color(0.12, 0.16, 0.19)
 const LIGHT := Color(0.65, 0.82, 0.75)
 const DRIVE_POINT := Vector3(0, 1.15, -8.0)
+const AMBER := Color(0.92, 0.58, 0.23)
+const PANEL := Color(0.075, 0.10, 0.12)
+const TRIM := Color(0.29, 0.34, 0.35)
 
 static func spawn_for(route: String) -> Vector3:
 	match route:
@@ -21,7 +24,7 @@ func _ready() -> void:
 	world.environment.background_color = Color(0.035, 0.05, 0.06)
 	world.environment.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	world.environment.ambient_light_color = LIGHT
-	world.environment.ambient_light_energy = 0.62
+	world.environment.ambient_light_energy = 0.48
 	add_child(world)
 	block(Vector3(0, -0.15, 0), Vector3(16, 0.3, 20), FLOOR)
 	block(Vector3(0, 3.7, 0), Vector3(16, 0.2, 20), WALL)
@@ -40,9 +43,11 @@ func _ready() -> void:
 		lamp.position = Vector3(0, 3.2, z)
 		lamp.light_color = LIGHT
 		lamp.light_energy = 2.8
+		lamp.shadow_enabled = z == 0.0
 		lamp.omni_range = 10.0
 		add_child(lamp)
 		block(Vector3(0, 3.53, z), Vector3(4, 0.08, 0.18), LIGHT, false, true)
+	build_visual_details()
 	var route := Campaign.relay_route()
 	var spawn := spawn_for(route)
 	signage("RELAY CONTROL", Vector3(0, 2.3, -9.7))
@@ -74,6 +79,34 @@ func _ready() -> void:
 	reserve.set("patrol_points", reserve_patrol)
 	add_child(reserve)
 
+func build_visual_details() -> void:
+	# All decorative additions are render-only; the authored collision layout stays intact.
+	for side in [-1.0, 1.0]:
+		block(Vector3(side * 7.86, 0.16, 0), Vector3(0.035, 0.25, 19.6), TRIM, false)
+		block(Vector3(side * 7.84, 2.85, 0), Vector3(0.05, 0.12, 19.6), PANEL, false)
+		block(Vector3(side * 1.08, 0.008, 0), Vector3(0.045, 0.012, 15.6), AMBER, false)
+		for z in [-3.0, 1.0, 5.0]:
+			for y in [0.35, 0.72, 1.09, 1.46, 1.83]:
+				block(Vector3(side * 3.5, y, z - 1.31), Vector3(1.05, 0.25, 0.025), PANEL, false)
+				block(Vector3(side * 3.5 - 0.29, y, z - 1.33), Vector3(0.08, 0.035, 0.018), AMBER, false, true)
+				block(Vector3(side * 3.5 + 0.22, y, z - 1.33), Vector3(0.20, 0.025, 0.018), LIGHT, false, true)
+			for edge in [-0.59, 0.59]:
+				block(Vector3(side * 3.5 + edge, 1.15, z - 1.32), Vector3(0.04, 2.25, 0.035), TRIM, false)
+	for z in range(-9, 10, 2):
+		block(Vector3(0, 0.004, float(z)), Vector3(15.7, 0.008, 0.018), PANEL, false)
+	block(Vector3(0, 1.38, -9.48), Vector3(2.8, 0.72, 0.06), PANEL, false)
+	for x in [-0.88, 0.0, 0.88]:
+		block(Vector3(x, 1.38, -9.43), Vector3(0.78, 0.49, 0.025), Color(0.15, 0.52, 0.46), false, true)
+		for y in [1.29, 1.40, 1.51]:
+			block(Vector3(x, y, -9.41), Vector3(0.55, 0.018, 0.01), LIGHT, false, true)
+	var accent := OmniLight3D.new()
+	accent.name = "RelayControlAccent"
+	accent.position = Vector3(0, 2.45, -8.8)
+	accent.light_color = AMBER
+	accent.light_energy = 0.85
+	accent.omni_range = 4.0
+	add_child(accent)
+
 func signage(content: String, at: Vector3) -> void:
 	var label := Label3D.new()
 	label.text = content
@@ -95,6 +128,8 @@ func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow :=
 	mesh.mesh = geometry
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = tint
+	mat.roughness = 0.82 if tint == FLOOR else 0.48
+	mat.metallic = 0.25 if tint == RACK or tint == TRIM else 0.0
 	if glow:
 		mat.emission_enabled = true
 		mat.emission = tint

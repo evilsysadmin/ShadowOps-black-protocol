@@ -403,6 +403,8 @@ func check_relay_scene() -> void:
 		check(bool(mission.call("can_reach", mission.get("intel_point"))), "relay drive reachable")
 		if is_instance_valid(reserve):
 			guard.call("enter_alert", true)
+			var security_hud: Label = mission.get("security_label")
+			check(security_hud.text.contains("Full alert recorded"), "security HUD records confirmed incident")
 			check(bool(reserve.get("ever_alerted")) and not bool(reserve.get("has_last_seen")), "shared alert without shared position")
 			reserve.call("advance_search", 5.0, reserve.position)
 			guard.call("begin_search", true)
@@ -413,6 +415,7 @@ func check_relay_scene() -> void:
 			var remaining := float(reserve.get("search_remaining"))
 			guard.call("enter_alert", false)
 			check(is_equal_approx(float(reserve.get("search_remaining")), remaining), "continuous alert does not restart search")
+			check(security_hud.text.contains("Full alert recorded"), "historical HUD remains after search cycles")
 			reserve.call("receive_hit", 3)
 			var aggregate: Dictionary = mission.call("security_summary")
 			check(aggregate["count"] == 2 and aggregate["down"] == 1 and aggregate["alerted"], "aggregate security state")

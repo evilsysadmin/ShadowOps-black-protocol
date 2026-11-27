@@ -109,6 +109,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Authored patrols now detect sustained movement stalls (1.2 seconds with less than 20% expected forward progress while movement is commanded; sideways sliding and backward motion do not count). They pause and advance to the next existing waypoint without teleporting. Ordinary pauses, brief collisions and search/alert behavior do not trigger recovery. This is a bounded fallback, not navmesh pathfinding; complex obstacles may still require route design. Regression covers transient and sustained stalls.
 
+- The mission HUD displays whether a full alert has been recorded during the current deployment. It changes on a confirmed incident, persists through subsequent searches and hides at the terminal report. It does not expose guard locations or unobserved suspicion. Local regression verifies confirmed alert feedback and historical continuity.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

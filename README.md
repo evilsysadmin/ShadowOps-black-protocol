@@ -121,6 +121,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Safehouse gains warm brass/wood trim, padded seating, locker faces and an abstract operations display. Three decorative station indicators follow the existing nearest-interaction selection, with amber for the active station and teal otherwise. Added geometry has no collision and does not move the existing interaction points. Single shadow-enabled main lamp; visual/runtime validation pending.
 
+- Safehouse, Silent Archive and Night Relay reuse scene-local box meshes by dimensions and immutable materials by tint and emission mode. Collision shapes remain independent, and the mutable station indicator materials are deliberately excluded. Station colors update only when the selected interaction changes. This reduces duplicate resource allocation, not necessarily draw calls; local performance measurements remain pending. Regression checks mesh/material identity and emission separation.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

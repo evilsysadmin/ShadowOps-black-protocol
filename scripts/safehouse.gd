@@ -1,5 +1,10 @@
 extends Node3D
 
+# Scene-local immutable resources shared by identical decorative and solid blocks.
+var box_mesh_cache: Dictionary = {}
+var opaque_material_cache: Dictionary = {}
+var emissive_material_cache: Dictionary = {}
+
 const TERMINAL := Vector3(0, 1.25, -3.0)
 const DOSSIER := Vector3(2.65, 1.25, -3.6)
 const ARMORY := Vector3(-2.65, 1.25, -3.6)
@@ -10,6 +15,7 @@ const BRASS := Color(0.60, 0.43, 0.23)
 const TEAL := Color(0.24, 0.70, 0.64)
 const AMBER := Color(0.92, 0.65, 0.29)
 var station_lights: Array[MeshInstance3D] = []
+var active_station_index := -2
 var player: CharacterBody3D
 var prompt: Label
 var requested := false
@@ -137,6 +143,9 @@ func build_visual_details() -> void:
 	add_child(accent)
 
 func update_station_lights(active: int) -> void:
+	if active_station_index == active:
+		return
+	active_station_index = active
 	for i in range(station_lights.size()):
 		var material := station_lights[i].material_override as StandardMaterial3D
 		material.emission = AMBER if i == active else TEAL
@@ -180,17 +189,12 @@ func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow :=
 	root.position = at
 	add_child(root)
 	var mesh := MeshInstance3D.new()
-	var geometry := BoxMesh.new()
-	geometry.size = dimensions
-	mesh.mesh = geometry
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = tint
-	mat.roughness = 0.85 if tint == WOOD else 0.6
-	mat.metallic = 0.25 if tint == METAL or tint == BRASS else 0.0
-	if glow:
-		mat.emission_enabled = true
-		mat.emission = tint
-	mesh.material_override = mat
+	if not box_mesh_cache.has(dimensions):
+		var geometry := BoxMesh.new()
+		geometry.size = dimensions
+		box_mesh_cache[dimensions] = geometry
+	mesh.mesh = box_mesh_cache[dimensions]
+	mesh.material_override = block_material(tint, glow)
 	root.add_child(mesh)
 	if solid:
 		var collider := CollisionShape3D.new()
@@ -198,3 +202,17 @@ func block(at: Vector3, dimensions: Vector3, tint: Color, solid := true, glow :=
 		bounds.size = dimensions
 		collider.shape = bounds
 		root.add_child(collider)
+
+func block_material(tint: Color, glow: bool) -> StandardMaterial3D:
+	var materials := emissive_material_cache if glow else opaque_material_cache
+	if materials.has(tint):
+		return materials[tint] as StandardMaterial3D
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = tint
+	mat.roughness = 0.85 if tint == WOOD else 0.6
+	mat.metallic = 0.25 if tint == METAL or tint == BRASS else 0.0
+	if glow:
+		mat.emission_enabled = true
+		mat.emission = tint
+	materials[tint] = mat
+	return mat

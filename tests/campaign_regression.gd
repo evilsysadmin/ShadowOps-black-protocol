@@ -400,6 +400,17 @@ func check_relay_scene() -> void:
 		check(mission.get("operation_id") == "night_relay", "relay mission identity")
 		var accent := relay.get_node_or_null("RelayControlAccent") as OmniLight3D
 		check(is_instance_valid(accent) and not accent.shadow_enabled, "relay accent is non-shadow light")
+		var dimensions := Vector3(0.1, 0.1, 0.1)
+		var tint := Color(0.2, 0.3, 0.4)
+		var block_a: Node3D = relay.call("block", Vector3(0, 3.4, 0), dimensions, tint, false, false)
+		var block_b: Node3D = relay.call("block", Vector3(0, 3.4, 1), dimensions, tint, false, true)
+		var mesh_a := block_a.get_child(0) as MeshInstance3D
+		var mesh_b := block_b.get_child(0) as MeshInstance3D
+		check(mesh_a.mesh == mesh_b.mesh, "identical box dimensions share mesh")
+		check(mesh_a.material_override != mesh_b.material_override, "emissive and opaque materials distinct")
+		check(mesh_a.material_override == relay.call("block_material", tint, false), "opaque material reused")
+		block_a.queue_free()
+		block_b.queue_free()
 		var summary: Dictionary = mission.call("security_summary")
 		check(summary["count"] == 2 and not summary["alerted"] and summary["down"] == 0, "relay security roster")
 		var reserve := relay.get_node_or_null("GuardReserve") as CharacterBody3D

@@ -119,6 +119,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Silent Archive art pass differentiates its filing shelves with paper/folder face panels, labels, trim, floor seams and a warmer records-desk accent against the cool ambient lighting. A single main lamp casts shadows. Added details are non-colliding; routes and mission geometry are unchanged. Local regression checks the accent light; visual quality and performance remain pending.
 
+- Safehouse gains warm brass/wood trim, padded seating, locker faces and an abstract operations display. Three decorative station indicators follow the existing nearest-interaction selection, with amber for the active station and teal otherwise. Added geometry has no collision and does not move the existing interaction points. Single shadow-enabled main lamp; visual/runtime validation pending.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

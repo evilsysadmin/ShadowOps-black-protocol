@@ -255,6 +255,15 @@ func run_regression() -> void:
 	await get_tree().physics_frame
 	var home_agent := safehouse.get_node_or_null("Agent")
 	check(is_instance_valid(home_agent), "safehouse agent exists")
+	var station_lights: Array = safehouse.get("station_lights")
+	check(station_lights.size() == 3, "safehouse has three station indicators")
+	if station_lights.size() == 3:
+		safehouse.call("update_station_lights", 1)
+		var selected_material := (station_lights[1] as MeshInstance3D).material_override as StandardMaterial3D
+		var other_material := (station_lights[0] as MeshInstance3D).material_override as StandardMaterial3D
+		check(selected_material.emission != other_material.emission, "active station indicator differs")
+		safehouse.call("update_station_lights", -1)
+		check(selected_material.emission == other_material.emission, "inactive indicators reset")
 	if is_instance_valid(home_agent):
 		check(int(home_agent.get("maximum_health")) == 120, "kit not applied in safehouse")
 		check(home_agent.get("combat") == null, "safehouse combat disabled")

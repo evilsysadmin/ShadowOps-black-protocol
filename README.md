@@ -107,6 +107,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Night Relay includes a second independent guard. Each new confirmed alert episode notifies other living guards in the same mission, raising readiness without granting the player's position or sharing visual memory. No recursive alert broadcast or per-frame refresh; a new incident can notify guards after an earlier search expires; guard state and aggregate report regressions added. Earlier operations retain their original guard counts. The second patrol and balance are provisional until local playtesting.
 
+- Authored patrols now detect sustained movement stalls (1.2 seconds with less than 20% expected speed while movement is commanded). They pause and advance to the next existing waypoint without teleporting. Ordinary pauses, brief collisions and search/alert behavior do not trigger recovery. This is a bounded fallback, not navmesh pathfinding; complex obstacles may still require route design. Regression covers transient and sustained stalls.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

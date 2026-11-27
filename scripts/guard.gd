@@ -11,6 +11,8 @@ const VisualRig = preload("res://scripts/character_visual.gd")
 var body: VisualRig
 var status: Label3D
 var pause_time := 0.0
+var patrol_stall_time := 0.0
+const PATROL_STALL_LIMIT := 1.2
 var facing := Vector3.BACK
 enum GuardState { PATROL, SUSPICIOUS, ALERT, SEARCH, DOWN }
 var state: GuardState = GuardState.PATROL
@@ -78,8 +80,10 @@ func _physics_process(delta: float) -> void:
 		velocity.y -= 9.8 * delta
 	else:
 		velocity.y = 0.0
+	var patrol_commanded := not visible and state in [GuardState.PATROL, GuardState.SUSPICIOUS] and Vector2(velocity.x, velocity.z).length() > 0.1
 	move_and_slide()
 	var actual_speed := Vector2(get_real_velocity().x, get_real_velocity().z).length()
+	observe_patrol_progress(delta, patrol_commanded, actual_speed)
 	body.animate_pose(delta, actual_speed, false, state == GuardState.ALERT and visible)
 	update_status()
 
@@ -189,6 +193,19 @@ func patrol(delta: float) -> void:
 	facing = offset.normalized()
 	velocity.x = facing.x * SPEED
 	velocity.z = facing.z * SPEED
+
+# Recover a stalled authored waypoint without teleporting or bypassing collisions.
+func observe_patrol_progress(delta: float, commanded: bool, actual_speed: float) -> void:
+	if not commanded or actual_speed >= SPEED * 0.2 or patrol_points.size() < 2:
+		patrol_stall_time = 0.0
+		return
+	patrol_stall_time += maxf(0.0, delta)
+	if patrol_stall_time >= PATROL_STALL_LIMIT:
+		waypoint = (waypoint + 1) % patrol_points.size()
+		pause_time = 0.8
+		patrol_stall_time = 0.0
+		velocity.x = 0.0
+		velocity.z = 0.0
 
 func sees_player() -> bool:
 	var origin := global_position + Vector3(0, 1.65, 0)

@@ -194,6 +194,16 @@ func run_regression() -> void:
 		check(not probe.search_moving and is_zero_approx(probe.velocity.x), "search scans after arrival")
 		probe.advance_search(5.0, Vector3(2, 0, 0))
 		check(probe.state == guard_script.GuardState.PATROL and not probe.has_last_seen and probe.ever_alerted, "search expires without clearing alert history")
+		var initial_waypoint: int = probe.waypoint
+		probe.observe_patrol_progress(0.6, true, 0.0)
+		check(probe.waypoint == initial_waypoint, "transient stall does not skip waypoint")
+		probe.observe_patrol_progress(0.1, true, 1.45)
+		check(is_zero_approx(probe.patrol_stall_time), "movement resets stall timer")
+		probe.observe_patrol_progress(1.3, false, 0.0)
+		check(probe.waypoint == initial_waypoint, "intentional pause does not skip waypoint")
+		probe.observe_patrol_progress(1.3, true, 0.0)
+		check(probe.waypoint != initial_waypoint and probe.pause_time > 0.0, "sustained stall advances authored waypoint")
+		check(probe.ever_alerted, "patrol recovery preserves alert history")
 		probe.free()
 	if is_instance_valid(agent):
 		var field_agent := agent as CharacterBody3D

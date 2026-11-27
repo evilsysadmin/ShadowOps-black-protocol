@@ -123,6 +123,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Safehouse, Silent Archive and Night Relay reuse scene-local box meshes by dimensions and immutable materials by tint and emission mode. Collision shapes remain independent, and the mutable station indicator materials are deliberately excluded. Station colors update only when the selected interaction changes. This reduces duplicate resource allocation, not necessarily draw calls; local performance measurements remain pending. Regression checks mesh/material identity and emission separation.
 
+- Audio settings now persist independent effects and ambience volumes using one atomic settings-file write. Both pause and briefing expose separate sliders with explicit Save audio; old settings files default ambience to 35%. This prepares the ambient sound layer without altering existing effect playback. Regression covers independent saves, bounds and nonfinite rejection.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

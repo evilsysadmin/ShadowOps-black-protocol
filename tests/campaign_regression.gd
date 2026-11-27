@@ -287,6 +287,13 @@ func run_regression() -> void:
 		check(settings.load("user://settings.cfg") == OK, "load independent settings")
 		check(is_equal_approx(float(settings.get_value("audio", "effects_volume", -1)), 0.25), "volume persisted")
 		check(GameSettings.save_effects_volume(1.5) and is_equal_approx(GameSettings.effects_volume, 1.0), "volume clamped")
+		check(GameSettings.save_ambient_volume(0.2), "ambient volume saved independently")
+		check(is_equal_approx(GameSettings.effects_volume, 1.0), "ambient save preserves effects")
+		check(settings.load("user://settings.cfg") == OK, "reload audio preferences")
+		check(is_equal_approx(float(settings.get_value("audio", "ambient_volume", -1)), 0.2), "ambient volume persisted")
+		check(GameSettings.save_audio_volumes(0.5, 1.5) and is_equal_approx(GameSettings.ambient_volume, 1.0), "combined save clamps ambient")
+		check(GameSettings.save_effects_volume(0.8) and is_equal_approx(GameSettings.ambient_volume, 1.0), "effects save preserves ambient")
+		check(not GameSettings.save_audio_volumes(NAN, 0.5), "nonfinite audio setting rejected")
 	safehouse.queue_free()
 	await get_tree().process_frame
 	check(Campaign.select_deployment_equipment("quiet_kit") and Campaign.equipment_active("quiet_kit"), "switch to owned movement kit")

@@ -66,6 +66,13 @@ func _ready() -> void:
 	var patrol: Array[Vector3] = [Vector3(0, 0, -4), Vector3(0, 0, 6), Vector3(1.5, 0, 6), Vector3(0, 0, 6)]
 	guard.set("patrol_points", patrol)
 	add_child(guard)
+	var reserve := CharacterBody3D.new()
+	reserve.name = "GuardReserve"
+	reserve.set_script(preload("res://scripts/guard.gd"))
+	reserve.position = Vector3(-6.0, 0.05, -7.0)
+	var reserve_patrol: Array[Vector3] = [Vector3(-6, 0, -7), Vector3(-6, 0, 6)]
+	reserve.set("patrol_points", reserve_patrol)
+	add_child(reserve)
 
 func signage(content: String, at: Vector3) -> void:
 	var label := Label3D.new()

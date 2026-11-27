@@ -113,6 +113,8 @@ The first operation is now described through a shared catalog. Silent Archive un
 
 - Procedural character models gain facial features, suit lapels and distinct security uniform details. The selected armor, utility rig or movement kit has a separate visual silhouette, applied only to field deployments. Geometry is presentation-only and does not change collision or combat attributes. Local regression checks armor and safehouse outfit separation; visual review remains pending.
 
+- Shared procedural locomotion gains ankle joints with bounded foot counter-rotation, subtle body sway while walking, and an idle breathing cycle that fades during aiming, movement and reload. Animation is visual only and uses the existing real movement speed and combat state. Regression checks joint count, rotation bounds and idle settling. No authored skeletal assets or runtime visual validation yet.
+
 ## Development policy
 
 Local-first POC. Small PRs and local playtests. No automated CI, deployments, ShadowOps ID or backend until playable POC approval. All geometry and character animation are provisional. Locomotion changes still require runtime validation.

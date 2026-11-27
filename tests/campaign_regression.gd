@@ -168,6 +168,14 @@ func run_regression() -> void:
 		check(is_zero_approx(float(visual.get("shot_pose"))), "shot visual decays")
 		visual.call("animate_pose", 0.1, 0.0, false, true, true)
 		check(float(visual.get("reload_pose")) > 0.0, "reload visual blends")
+		var ankles: Array = visual.get("ankles")
+		check(ankles.size() == 2, "agent articulated ankles")
+		visual.call("animate_pose", 0.2, 3.6, false, false, false)
+		check(float(visual.get("stride")) > 0.0, "walk stride builds")
+		for ankle in ankles:
+			check(absf((ankle as Node3D).rotation.x) <= 0.56, "ankle counter rotation bounded")
+		visual.call("animate_pose", 1.0, 0.0, false, false, false)
+		check(float(visual.get("stride")) < 0.01, "walk stride settles to idle")
 	var guard := hotel.get_node_or_null("Guard")
 	check(is_instance_valid(guard), "hotel guard exists")
 	if is_instance_valid(guard):
@@ -175,6 +183,7 @@ func run_regression() -> void:
 		check(is_instance_valid(guard_visual), "guard visual rig exists")
 		if is_instance_valid(guard_visual):
 			check(guard_visual.get("knees").size() == 2, "guard articulated knees")
+			check(guard_visual.get("ankles").size() == 2, "guard articulated ankles")
 			check(guard_visual.get("elbows").size() == 2, "guard articulated elbows")
 		var guard_script = preload("res://scripts/guard.gd")
 		var probe = guard_script.new()

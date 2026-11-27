@@ -4,9 +4,11 @@ var hips: Node3D
 var torso: Node3D
 var thighs: Array[Node3D] = []
 var knees: Array[Node3D] = []
+var ankles: Array[Node3D] = []
 var shoulders: Array[Node3D] = []
 var elbows: Array[Node3D] = []
 var phase := 0.0
+var idle_phase := 0.0
 var stride := 0.0
 var stance := 0.0
 var aim_blend := 0.0
@@ -59,8 +61,10 @@ func build(uniform: Color, trousers: Color, security := false, equipment := "") 
 		var knee := joint(thigh, Vector3(0, -0.42, 0))
 		knees.append(knee)
 		ellipsoid(knee, Vector3(0, -0.15, 0), Vector3(0.17, 0.36, 0.18), pants)
-		cuboid(knee, Vector3(0, -0.365, -0.055), Vector3(0.18, 0.16, 0.30), leather)
-		cuboid(knee, Vector3(0, -0.435, -0.055), Vector3(0.19, 0.035, 0.31), trim)
+		var ankle := joint(knee, Vector3(0, -0.365, 0))
+		ankles.append(ankle)
+		cuboid(ankle, Vector3(0, 0, -0.055), Vector3(0.18, 0.16, 0.30), leather)
+		cuboid(ankle, Vector3(0, -0.07, -0.055), Vector3(0.19, 0.035, 0.31), trim)
 		var shoulder := joint(torso, Vector3(side * 0.265, 0.49, 0))
 		shoulders.append(shoulder)
 		ellipsoid(shoulder, Vector3(side * 0.035, -0.13, 0), Vector3(0.20, 0.35, 0.23), cloth)
@@ -103,13 +107,19 @@ func animate_pose(delta: float, speed: float, crouched: bool, aiming: bool, relo
 	reload_pose = lerpf(reload_pose, 1.0 if reloading else 0.0, blend)
 	held_prop.visible = aim_blend > 0.15 or reload_pose > 0.15 or shot_pose > 0.0
 	phase = fmod(phase + delta * speed * 2.1, TAU)
-	hips.position.y = lerpf(0.89, 0.49, stance) + absf(sin(phase)) * stride * 0.02
-	torso.rotation.x = lerpf(0.0, -0.72, stance)
+	idle_phase = fmod(idle_phase + delta * 1.7, TAU)
+	var idle_weight := (1.0 - clampf(stride, 0.0, 1.0)) * (1.0 - aim_blend * 0.8) * (1.0 - reload_pose)
+	hips.position.y = lerpf(0.89, 0.49, stance) + absf(sin(phase)) * stride * 0.02 + sin(idle_phase) * idle_weight * 0.006
+	torso.rotation.x = lerpf(0.0, -0.72, stance) - stride * 0.035 + sin(idle_phase) * idle_weight * 0.012
+	torso.rotation.z = sin(phase) * stride * 0.025 * (1.0 - aim_blend)
+	torso.rotation.y = sin(phase) * stride * 0.045 * (1.0 - aim_blend)
 	for i in range(2):
 		var cycle := phase + float(i) * PI
 		var swing := sin(cycle) * stride
 		thighs[i].rotation.x = lerpf(0.0, 1.0, stance) + swing * lerpf(0.55, 0.24, stance)
 		knees[i].rotation.x = lerpf(0.0, -1.9, stance) - maxf(0.0, sin(cycle)) * stride * 0.5
+		# Counter-rotate the foot against the lower leg for a less rigid silhouette.
+		ankles[i].rotation.x = clampf(-(thighs[i].rotation.x + knees[i].rotation.x) * 0.55, -0.45, 0.55)
 		shoulders[i].rotation.x = lerpf(-swing * 0.32, 0.95, aim_blend)
 		elbows[i].rotation.x = lerpf(0.12 + maxf(0.0, -swing) * 0.32, 0.62, aim_blend)
 		shoulders[i].rotation.x += shot_pose * 0.12 + reload_pose * 0.40
